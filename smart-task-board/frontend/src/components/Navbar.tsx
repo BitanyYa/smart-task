@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Bell, Settings } from 'lucide-react';
+import { Search, Bell, Settings, Sun, Moon } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { NotificationsPanel } from './NotificationsPanel';
@@ -15,7 +15,7 @@ interface Props {
 }
 
 export const Navbar = ({ search, onSearch, tasks, onNavigate }: Props) => {
-  const { theme } = useTheme();
+  const { theme, toggle } = useTheme();
   const { user } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -55,6 +55,15 @@ export const Navbar = ({ search, onSearch, tasks, onNavigate }: Props) => {
             <NotificationsPanel tasks={tasks} onClose={() => setShowNotifications(false)} />
           )}
         </div>
+
+        {/* Theme toggle */}
+        <button
+          onClick={toggle}
+          aria-label="Toggle theme"
+          className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        >
+          {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+        </button>
 
         {/* Settings shortcut */}
         <button

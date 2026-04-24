@@ -1,4 +1,6 @@
 import { LayoutDashboard, ListTodo, BarChart2, Archive, Trash2, HelpCircle, LogOut, ChevronRight, Users } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import type { Page } from '../types/navigation';
 
 interface Props {
@@ -21,6 +23,13 @@ const bottomItems: { id: Page; label: string; icon: React.ElementType }[] = [
 ];
 
 export const Sidebar = ({ activePage, onNavigate, trashedCount, onNewTask }: Props) => {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
   return (
     <aside className="w-56 shrink-0 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 flex flex-col h-screen sticky top-0">
       {/* Brand */}
@@ -101,7 +110,7 @@ export const Sidebar = ({ activePage, onNavigate, trashedCount, onNewTask }: Pro
           <HelpCircle size={15} />
           Help Center
         </button>
-        <button className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors text-left font-medium">
+        <button onClick={handleLogout} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors text-left font-medium">
           <LogOut size={15} />
           Log Out
         </button>
