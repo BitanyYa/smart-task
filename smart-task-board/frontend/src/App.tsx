@@ -1,31 +1,35 @@
-import { Component, ReactNode } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { Board } from './components/Board';
+import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
 import './index.css';
 
-class ErrorBoundary extends Component<{ children: ReactNode }, { error: string | null }> {
-  state = { error: null };
-  static getDerivedStateFromError(e: Error) { return { error: e.message }; }
-  render() {
-    if (this.state.error) {
-      return (
-        <div style={{ padding: 40, color: 'red', fontFamily: 'monospace' }}>
-          <h2>Something went wrong:</h2>
-          <pre>{this.state.error}</pre>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
+  if (loading) return (
+    <div className="flex items-center justify-center h-screen bg-gray-50">
+      <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+  return user ? <>{children}</> : <Navigate to="/login" replace />;
+};
 
 function App() {
   return (
-    <ErrorBoundary>
-      <ThemeProvider>
-        <Board />
-      </ThemeProvider>
-    </ErrorBoundary>
+    <BrowserRouter>
+      <AuthProvider>
+        <ThemeProvider>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/" element={<ProtectedRoute><Board /></ProtectedRoute>} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </ThemeProvider>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
 

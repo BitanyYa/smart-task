@@ -44,9 +44,10 @@ interface Props {
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
   onAdd?: () => void;
+  onOpenDetail: (task: Task) => void;
 }
 
-export const Column = ({ status, tasks, onEdit, onDelete, onAdd }: Props) => {
+export const Column = ({ status, tasks, onEdit, onDelete, onAdd, onOpenDetail }: Props) => {
   const { setNodeRef, isOver } = useDroppable({ id: status });
   const c = columnConfig[status];
 
@@ -73,7 +74,7 @@ export const Column = ({ status, tasks, onEdit, onDelete, onAdd }: Props) => {
           className={`flex flex-col gap-3 min-h-[200px] rounded-xl transition-colors duration-150 ${isOver ? 'bg-blue-50/60 dark:bg-blue-950/10' : ''}`}
         >
           {tasks.map(task => (
-            <TaskCard key={task.id} task={task} onEdit={onEdit} onDelete={onDelete} />
+            <TaskCard key={task.id} task={task} onEdit={onEdit} onDelete={onDelete} onOpenDetail={onOpenDetail} />
           ))}
 
           {/* Archive drop zone for Done column */}

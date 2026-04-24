@@ -12,49 +12,59 @@ const signToken = (id: string) =>
 
 // POST /api/auth/register
 router.post('/register', async (req: Request, res: Response) => {
-  const schema = z.object({
-    name:     z.string().min(2),
-    email:    z.string().email(),
-    password: z.string().min(6),
-  });
+  try {
+    const schema = z.object({
+      name:     z.string().min(2),
+      email:    z.string().email(),
+      password: z.string().min(6),
+    });
 
-  const parsed = schema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ message: parsed.error.issues[0].message });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: parsed.error.issues[0].message });
+    }
+
+    const { name, email, password } = parsed.data;
+
+    const exists = await User.findOne({ email });
+    if (exists) return res.status(400).json({ message: 'Email already in use' });
+
+    const user = await User.create({ name, email, password });
+    const token = signToken(String(user._id));
+
+    res.status(201).json({ token, user });
+  } catch (err: any) {
+    console.error('Register error:', err);
+    res.status(500).json({ message: err.message || 'Server error' });
   }
-
-  const { name, email, password } = parsed.data;
-
-  const exists = await User.findOne({ email });
-  if (exists) return res.status(400).json({ message: 'Email already in use' });
-
-  const user = await User.create({ name, email, password });
-  const token = signToken(String(user._id));
-
-  res.status(201).json({ token, user });
 });
 
 // POST /api/auth/login
 router.post('/login', async (req: Request, res: Response) => {
-  const schema = z.object({
-    email:    z.string().email(),
-    password: z.string().min(1),
-  });
+  try {
+    const schema = z.object({
+      email:    z.string().email(),
+      password: z.string().min(1),
+    });
 
-  const parsed = schema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ message: parsed.error.issues[0].message });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: parsed.error.issues[0].message });
+    }
+
+    const { email, password } = parsed.data;
+
+    const user = await User.findOne({ email });
+    if (!user || !(await user.comparePassword(password))) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    const token = signToken(String(user._id));
+    res.json({ token, user });
+  } catch (err: any) {
+    console.error('Login error:', err);
+    res.status(500).json({ message: err.message || 'Server error' });
   }
-
-  const { email, password } = parsed.data;
-
-  const user = await User.findOne({ email });
-  if (!user || !(await user.comparePassword(password))) {
-    return res.status(401).json({ message: 'Invalid email or password' });
-  }
-
-  const token = signToken(String(user._id));
-  res.json({ token, user });
 });
 
 // GET /api/auth/me

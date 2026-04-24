@@ -1,8 +1,10 @@
 import { Search, Bell, Settings, Sun, Moon } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 
 export const Navbar = ({ search, onSearch }: { search: string; onSearch: (v: string) => void }) => {
   const { theme, toggle } = useTheme();
+  const { user, logout } = useAuth();
 
   return (
     <header className="h-12 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 flex items-center px-6 shrink-0">
@@ -26,8 +28,8 @@ export const Navbar = ({ search, onSearch }: { search: string; onSearch: (v: str
         <button onClick={toggle} aria-label="Toggle theme" className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
           {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
         </button>
-        <div className="w-7 h-7 rounded-full bg-teal-500 flex items-center justify-center text-white text-xs font-bold shrink-0 cursor-pointer select-none">
-          U
+        <div className="w-7 h-7 rounded-full bg-teal-500 flex items-center justify-center text-white text-xs font-bold shrink-0 cursor-pointer select-none" title={user?.name} onClick={logout}>
+          {user?.name?.[0]?.toUpperCase() || 'U'}
         </div>
       </div>
     </header>
