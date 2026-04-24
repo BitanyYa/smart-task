@@ -81,4 +81,38 @@ router.get('/me', async (req: Request, res: Response) => {
   }
 });
 
+// PATCH /api/auth/profile
+router.patch('/profile', async (req: Request, res: Response) => {
+  const header = req.headers.authorization;
+  if (!header?.startsWith('Bearer ')) return res.status(401).json({ message: 'Not authorized' });
+  try {
+    const decoded = jwt.verify(header.split(' ')[1], process.env.JWT_SECRET!) as { id: string };
+    const { name, email } = req.body;
+    const user = await User.findByIdAndUpdate(decoded.id, { name, email }, { new: true }).select('-password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user);
+  } catch {
+    res.status(401).json({ message: 'Invalid token' });
+  }
+});
+
+// PATCH /api/auth/password
+router.patch('/password', async (req: Request, res: Response) => {
+  const header = req.headers.authorization;
+  if (!header?.startsWith('Bearer ')) return res.status(401).json({ message: 'Not authorized' });
+  try {
+    const decoded = jwt.verify(header.split(' ')[1], process.env.JWT_SECRET!) as { id: string };
+    const { currentPassword, newPassword } = req.body;
+    const user = await User.findById(decoded.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    const valid = await user.comparePassword(currentPassword);
+    if (!valid) return res.status(400).json({ message: 'Current password is incorrect' });
+    user.password = newPassword;
+    await user.save();
+    res.json({ message: 'Password updated' });
+  } catch {
+    res.status(401).json({ message: 'Invalid token' });
+  }
+});
+
 export default router;

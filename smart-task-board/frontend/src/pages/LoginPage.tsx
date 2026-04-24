@@ -18,7 +18,7 @@ export const LoginPage = () => {
     setLoading(true);
     try {
       await login(email, password);
-      navigate('/');
+      navigate('/app');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed');
     } finally {

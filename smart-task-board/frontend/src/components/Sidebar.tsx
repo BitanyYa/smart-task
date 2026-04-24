@@ -1,4 +1,4 @@
-import { LayoutDashboard, ListTodo, BarChart2, Archive, Trash2, HelpCircle, LogOut, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, ListTodo, BarChart2, Archive, Trash2, HelpCircle, LogOut, ChevronRight, Users } from 'lucide-react';
 import type { Page } from '../types/navigation';
 
 interface Props {
@@ -12,6 +12,7 @@ const navItems: { id: Page; label: string; icon: React.ElementType }[] = [
   { id: 'board',     label: 'Board',    icon: LayoutDashboard },
   { id: 'my-tasks',  label: 'My Tasks', icon: ListTodo },
   { id: 'analytics', label: 'Analytics',icon: BarChart2 },
+  { id: 'teams',     label: 'Teams',    icon: Users },
 ];
 
 const bottomItems: { id: Page; label: string; icon: React.ElementType }[] = [
