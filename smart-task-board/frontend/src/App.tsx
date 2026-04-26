@@ -8,6 +8,7 @@ import { LandingPage } from './pages/LandingPage';
 import { VerifyEmailPage } from './pages/VerifyEmailPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
+import { AcceptInvitePage } from './pages/AcceptInvitePage';
 import './index.css';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -32,6 +33,7 @@ function App() {
             <Route path="/verify-email"    element={<VerifyEmailPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password"  element={<ResetPasswordPage />} />
+            <Route path="/accept-invite"   element={<AcceptInvitePage />} />
             <Route path="/app"             element={<ProtectedRoute><Board /></ProtectedRoute>} />
             <Route path="*"               element={<Navigate to="/" replace />} />
           </Routes>

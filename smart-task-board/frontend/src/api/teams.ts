@@ -30,3 +30,5 @@ export const getMyTeam    = (token: string) => base.get<TeamData>('/teams/my', a
 export const inviteMember = (token: string, email: string, role: TeamRole) => base.post('/teams/my/invite', { email, role }, auth(token)).then(r => r.data);
 export const removeMember = (token: string, userId: string) => base.delete(`/teams/my/members/${userId}`, auth(token)).then(r => r.data);
 export const changeRole   = (token: string, userId: string, role: TeamRole) => base.patch(`/teams/my/members/${userId}/role`, { role }, auth(token)).then(r => r.data);
+export const renameTeam   = (token: string, name: string) => base.patch('/teams/my', { name }, auth(token)).then(r => r.data);
+export const cancelInvite = (token: string, inviteToken: string) => base.delete(`/teams/my/invites/${inviteToken}`, auth(token)).then(r => r.data);

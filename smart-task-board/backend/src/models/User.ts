@@ -1,6 +1,14 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
+export interface INotification {
+  _id?: string;
+  type: 'invite_accepted' | 'invite_received' | 'general';
+  message: string;
+  read: boolean;
+  createdAt: Date;
+}
+
 export interface IUser extends Document {
   name: string;
   email: string;
@@ -11,9 +19,17 @@ export interface IUser extends Document {
   verificationExpires?: Date | null;
   resetPasswordToken?: string | null;
   resetPasswordExpires?: Date | null;
+  notifications: INotification[];
   createdAt: Date;
   comparePassword(candidate: string): Promise<boolean>;
 }
+
+const NotificationSchema = new Schema({
+  type:      { type: String, enum: ['invite_accepted', 'invite_received', 'general'], required: true },
+  message:   { type: String, required: true },
+  read:      { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now },
+}, { _id: true });
 
 const UserSchema = new Schema<IUser>({
   name:                   { type: String, required: true, trim: true },
@@ -25,6 +41,7 @@ const UserSchema = new Schema<IUser>({
   verificationExpires:    { type: Date, default: null },
   resetPasswordToken:     { type: String, default: null },
   resetPasswordExpires:   { type: Date, default: null },
+  notifications:          { type: [NotificationSchema], default: [] },
 }, { timestamps: true });
 
 // Hash password before save

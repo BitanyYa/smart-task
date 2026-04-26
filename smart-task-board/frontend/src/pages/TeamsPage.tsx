@@ -235,6 +235,36 @@ export const TeamsPage = () => {
         )}
       </div>
 
+      {/* Pending invites */}
+      {isOwner && data?.team.invites && data.team.invites.length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-sm font-bold text-neutral-600 dark:text-neutral-400 uppercase tracking-widest mb-3">Pending Invites</h2>
+          <div className="bg-cream-100 dark:bg-neutral-900 rounded-xl border border-cream-300 dark:border-neutral-800 overflow-hidden shadow-sm">
+            {data.team.invites.map((inv: any) => (
+              <div key={inv.token} className="flex items-center justify-between px-5 py-3.5 border-b border-cream-200 dark:border-neutral-800 last:border-0">
+                <div>
+                  <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{inv.email}</p>
+                  <p className="text-xs text-neutral-400 capitalize mt-0.5">Invited as {inv.role}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs bg-cream-200 dark:bg-neutral-800 text-neutral-500 px-2 py-0.5 rounded-full">Pending</span>
+                  <button
+                    onClick={async () => {
+                      await teamsApi.cancelInvite(token!, inv.token);
+                      const updated = await teamsApi.getMyTeam(token!);
+                      setData(updated);
+                    }}
+                    className="text-xs text-red-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 px-2 py-1 rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Invite modal */}
       {showInvite && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/25 backdrop-blur-sm" onClick={() => setShowInvite(false)}>

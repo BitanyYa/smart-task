@@ -7,11 +7,17 @@ import authRoutes from './routes/auth';
 import taskRoutes from './routes/tasks';
 import teamRoutes from './routes/teams';
 import projectRoutes from './routes/projects';
+import notificationRoutes from './routes/notifications';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.APP_URL || 'http://localhost:5173',
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+}));
 app.use(express.json());
 
 // ── Rate limiters ──────────────────────────────────────────
@@ -47,6 +53,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/projects', projectRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 

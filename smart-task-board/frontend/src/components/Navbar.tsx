@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Search, Bell, Settings, Sun, Moon } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { NotificationsPanel } from './NotificationsPanel';
 import { ProfileDropdown } from './ProfileDropdown';
+import { getNotifications } from '../api/notifications';
 import type { Task } from '../types/task';
 import type { Page } from '../types/navigation';
 
@@ -16,11 +17,27 @@ interface Props {
 
 export const Navbar = ({ search, onSearch, tasks, onNavigate }: Props) => {
   const { theme, toggle } = useTheme();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchUnread = useCallback(async () => {
+    if (!token) return;
+    try {
+      const notifs = await getNotifications(token);
+      setUnreadCount(notifs.filter(n => !n.read).length);
+    } catch { /* silent */ }
+  }, [token]);
+
+  useEffect(() => {
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 30000); // poll every 30s
+    return () => clearInterval(interval);
+  }, [fetchUnread]);
 
   const overdueCount = tasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'done').length;
+  const totalBadge = overdueCount + unreadCount;
 
   const iconBtn = "w-8 h-8 flex items-center justify-center rounded-lg text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:text-cream-100 dark:hover:text-cream-100 hover:bg-cream-300 dark:hover:bg-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-800 transition-colors";
 
@@ -39,9 +56,13 @@ export const Navbar = ({ search, onSearch, tasks, onNavigate }: Props) => {
         <div className="relative">
           <button onClick={() => { setShowNotifications(p => !p); setShowProfile(false); }} aria-label="Notifications" className={iconBtn}>
             <Bell size={16} />
-            {overdueCount > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-primary-500 rounded-full" />}
           </button>
-          {showNotifications && <NotificationsPanel tasks={tasks} onClose={() => setShowNotifications(false)} />}
+          {totalBadge > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none pointer-events-none">
+              {totalBadge > 99 ? '99+' : totalBadge}
+            </span>
+          )}
+          {showNotifications && <NotificationsPanel tasks={tasks} onClose={() => { setShowNotifications(false); fetchUnread(); }} />}
         </div>
 
         <button onClick={() => onNavigate('settings')} aria-label="Settings" className={iconBtn}>
