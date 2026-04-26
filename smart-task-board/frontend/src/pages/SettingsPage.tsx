@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import {
   User, Settings, Bell, LayoutDashboard, Shield,
   Lock, ChevronRight, Loader2, Check, Pencil, Download
@@ -17,8 +17,8 @@ const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: 'security',      label: 'Security',       icon: Shield },
 ];
 
-const inputCls = "w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3.5 py-2.5 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-400/40 focus:border-blue-400 transition-all";
-const labelCls = "text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1.5 block";
+const inputCls = "w-full bg-cream-100 dark:bg-neutral-800 border border-cream-300 dark:border-neutral-700 rounded-lg px-3.5 py-2.5 text-sm text-neutral-800 dark:text-cream-100 placeholder-gray-400 outline-none focus:ring-2 focus:ring-primary-400/40 focus:border-primary-400 transition-all";
+const labelCls = "text-[11px] font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-widest mb-1.5 block";
 
 export const SettingsPage = () => {
   const { user, token } = useAuth();
@@ -93,25 +93,25 @@ export const SettingsPage = () => {
 
   const Toggle = ({ checked, onChange }: { checked: boolean; onChange: () => void }) => (
     <button type="button" onClick={onChange}
-      className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${checked ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'}`}>
-      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'}`} />
+      className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${checked ? 'bg-primary-500' : 'bg-gray-200 dark:bg-gray-700'}`}>
+      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-cream-100 dark:bg-neutral-900 rounded-full shadow transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'}`} />
     </button>
   );
 
   return (
     <div className="flex h-full">
       {/* Left settings nav */}
-      <div className="w-52 shrink-0 border-r border-gray-100 dark:border-gray-800 px-3 py-6 flex flex-col gap-1">
+      <div className="w-52 shrink-0 border-r border-cream-300 dark:border-neutral-800 px-3 py-6 flex flex-col gap-1 bg-cream-100 dark:bg-neutral-900">
         <div className="px-3 mb-4">
-          <p className="text-lg font-bold text-gray-900 dark:text-gray-100">Settings</p>
-          <p className="text-xs text-gray-400 mt-0.5">Manage preferences</p>
+          <p className="text-lg font-bold text-neutral-800 dark:text-cream-100">Settings</p>
+          <p className="text-xs text-neutral-400 mt-0.5">Manage preferences</p>
         </div>
         {tabs.map(tab => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id)}
             className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-colors text-left ${
               activeTab === tab.id
-                ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-semibold'
-                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 font-medium'
+                ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 font-semibold'
+                : 'text-neutral-600 dark:text-neutral-400 hover:bg-cream-200 dark:hover:bg-neutral-800 dark:bg-neutral-800 dark:hover:bg-neutral-800 font-medium'
             }`}>
             <tab.icon size={15} className="shrink-0" />
             {tab.label}
@@ -119,25 +119,25 @@ export const SettingsPage = () => {
         ))}
 
         {/* Pro plan card */}
-        <div className="mt-auto mx-1 bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 rounded-xl p-4">
-          <p className="text-xs font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider mb-1">Pro Plan</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">Get unlimited workspaces and advanced analytics.</p>
-          <button className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 rounded-lg transition-colors">
+        <div className="mt-auto mx-1 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800/40 rounded-xl p-4">
+          <p className="text-xs font-bold text-primary-600 dark:text-primary-400 uppercase tracking-wider mb-1">Pro Plan</p>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-3">Get unlimited workspaces and advanced analytics.</p>
+          <button className="w-full bg-primary-500 hover:bg-primary-600 text-white text-xs font-bold py-2 rounded-lg transition-colors">
             Upgrade Plan
           </button>
         </div>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-8 py-7">
+      <div className="flex-1 overflow-y-auto px-8 py-7 bg-cream-200 dark:bg-neutral-950">
 
         {/* PROFILE TAB */}
         {activeTab === 'profile' && (
           <form onSubmit={handleProfileSave}>
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm mb-5">
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800">
-                <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Profile</h2>
-                <span className="text-xs text-gray-400">Manage your public information</span>
+            <div className="bg-cream-100 dark:bg-neutral-900 rounded-2xl border border-cream-300 dark:border-neutral-800 shadow-sm mb-5">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-cream-200 dark:border-neutral-800">
+                <h2 className="text-lg font-bold text-neutral-800 dark:text-cream-100">Profile</h2>
+                <span className="text-xs text-neutral-400">Manage your public information</span>
               </div>
               <div className="p-6 flex gap-6">
                 {/* Avatar */}
@@ -146,7 +146,7 @@ export const SettingsPage = () => {
                     <div className="w-20 h-20 rounded-full bg-teal-500 flex items-center justify-center text-white text-3xl font-bold shadow-md">
                       {user?.name?.[0]?.toUpperCase()}
                     </div>
-                    <button type="button" className="absolute bottom-0 right-0 w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center shadow-md hover:bg-blue-700 transition-colors">
+                    <button type="button" className="absolute bottom-0 right-0 w-7 h-7 bg-primary-500 rounded-full flex items-center justify-center shadow-md hover:bg-primary-600 transition-colors">
                       <Pencil size={12} className="text-white" />
                     </button>
                   </div>
@@ -182,17 +182,17 @@ export const SettingsPage = () => {
             </div>
 
             {/* Export data */}
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm mb-5 px-6 py-4 flex items-center justify-between">
+            <div className="bg-cream-100 dark:bg-neutral-900 rounded-2xl border border-cream-300 dark:border-neutral-800 shadow-sm mb-5 px-6 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-lg bg-cream-200 dark:bg-neutral-800 flex items-center justify-center">
                   <Download size={15} className="text-gray-500" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Export Data</p>
-                  <p className="text-xs text-gray-400">Download a copy of your task history and account data.</p>
+                  <p className="text-sm font-semibold text-neutral-800 dark:text-cream-100">Export Data</p>
+                  <p className="text-xs text-neutral-400">Download a copy of your task history and account data.</p>
                 </div>
               </div>
-              <button type="button" className="flex items-center gap-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 px-3 py-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors">
+              <button type="button" className="flex items-center gap-1.5 text-sm font-medium text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-800 px-3 py-1.5 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-950/30 transition-colors">
                 <Download size={13} /> Export Data
               </button>
             </div>
@@ -200,11 +200,11 @@ export const SettingsPage = () => {
             {/* Footer */}
             <div className="flex justify-end gap-3">
               <button type="button" onClick={() => { setName(user?.name || ''); setEmail(user?.email || ''); }}
-                className="px-5 py-2.5 text-sm font-semibold text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                className="px-5 py-2.5 text-sm font-semibold text-neutral-600 dark:text-neutral-400 border border-cream-300 dark:border-neutral-700 rounded-xl hover:bg-cream-200 dark:hover:bg-neutral-800 dark:bg-neutral-800 dark:hover:bg-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-800 transition-colors">
                 Cancel
               </button>
               <button type="submit" disabled={profileLoading}
-                className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 rounded-xl transition-colors shadow-sm">
+                className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-primary-500 hover:bg-primary-600 disabled:opacity-60 rounded-xl transition-colors shadow-sm">
                 {profileLoading ? <Loader2 size={14} className="animate-spin" /> : profileSaved ? <Check size={14} /> : null}
                 {profileSaved ? 'Saved!' : 'Save Changes'}
               </button>
@@ -215,8 +215,8 @@ export const SettingsPage = () => {
         {/* ACCOUNT TAB */}
         {activeTab === 'account' && (
           <div className="grid grid-cols-2 gap-5">
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm p-6">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-5">Account Preferences</h2>
+            <div className="bg-cream-100 dark:bg-neutral-900 rounded-2xl border border-cream-300 dark:border-neutral-800 shadow-sm p-6">
+              <h2 className="text-lg font-bold text-neutral-800 dark:text-cream-100 mb-5">Account Preferences</h2>
               <div className="flex flex-col gap-4">
                 <div>
                   <label className={labelCls}>Language</label>
@@ -253,8 +253,8 @@ export const SettingsPage = () => {
                       <button key={t} type="button" onClick={() => theme !== t && toggle()}
                         className={`flex-1 py-2 rounded-lg text-sm font-semibold border transition-colors capitalize ${
                           theme === t
-                            ? 'bg-blue-600 border-blue-600 text-white'
-                            : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-blue-400'
+                            ? 'bg-primary-500 border-primary-500 text-white'
+                            : 'bg-cream-100 dark:bg-neutral-800 border-cream-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:border-primary-400'
                         }`}>
                         {t}
                       </button>
@@ -264,46 +264,46 @@ export const SettingsPage = () => {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm p-6">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-5">Security</h2>
+            <div className="bg-cream-100 dark:bg-neutral-900 rounded-2xl border border-cream-300 dark:border-neutral-800 shadow-sm p-6">
+              <h2 className="text-lg font-bold text-neutral-800 dark:text-cream-100 mb-5">Security</h2>
               <div className="flex flex-col gap-3">
-                <div className="flex items-center justify-between p-3.5 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                <div className="flex items-center justify-between p-3.5 bg-cream-200 dark:bg-neutral-800 rounded-xl">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-950/40 flex items-center justify-center">
-                      <Lock size={14} className="text-blue-600 dark:text-blue-400" />
+                    <div className="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/20 flex items-center justify-center">
+                      <Lock size={14} className="text-primary-600 dark:text-primary-400" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Password</p>
-                      <p className="text-xs text-gray-400">Last changed recently</p>
+                      <p className="text-sm font-semibold text-neutral-800 dark:text-cream-100">Password</p>
+                      <p className="text-xs text-neutral-400">Last changed recently</p>
                     </div>
                   </div>
-                  <button onClick={() => setActiveTab('security')} className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline">Update</button>
+                  <button onClick={() => setActiveTab('security')} className="text-xs font-bold text-primary-600 dark:text-primary-400 hover:underline">Update</button>
                 </div>
 
-                <div className="flex items-center justify-between p-3.5 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                <div className="flex items-center justify-between p-3.5 bg-cream-200 dark:bg-neutral-800 rounded-xl">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-950/40 flex items-center justify-center">
                       <Shield size={14} className="text-orange-500" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Two-Factor Auth</p>
-                      <p className="text-xs text-gray-400">Enabled via Authenticator App</p>
+                      <p className="text-sm font-semibold text-neutral-800 dark:text-cream-100">Two-Factor Auth</p>
+                      <p className="text-xs text-neutral-400">Enabled via Authenticator App</p>
                     </div>
                   </div>
                   <Toggle checked={twoFactor} onChange={() => setTwoFactor(p => !p)} />
                 </div>
 
-                <div className="flex items-center justify-between p-3.5 bg-gray-50 dark:bg-gray-800 rounded-xl cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                <div className="flex items-center justify-between p-3.5 bg-cream-200 dark:bg-neutral-800 rounded-xl cursor-pointer hover:bg-cream-200 dark:hover:bg-neutral-800 dark:bg-neutral-800 dark:hover:bg-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-700 transition-colors">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
                       <Settings size={14} className="text-gray-500" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Active Sessions</p>
-                      <p className="text-xs text-gray-400">1 device currently logged in</p>
+                      <p className="text-sm font-semibold text-neutral-800 dark:text-cream-100">Active Sessions</p>
+                      <p className="text-xs text-neutral-400">1 device currently logged in</p>
                     </div>
                   </div>
-                  <ChevronRight size={15} className="text-gray-400" />
+                  <ChevronRight size={15} className="text-neutral-400" />
                 </div>
               </div>
             </div>
@@ -312,12 +312,12 @@ export const SettingsPage = () => {
 
         {/* NOTIFICATIONS TAB */}
         {activeTab === 'notifications' && (
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
-            <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Notifications</h2>
-              <p className="text-xs text-gray-400 mt-0.5">Choose how and when you want to be notified</p>
+          <div className="bg-cream-100 dark:bg-neutral-900 rounded-2xl border border-cream-300 dark:border-neutral-800 shadow-sm">
+            <div className="px-6 py-4 border-b border-cream-200 dark:border-neutral-800">
+              <h2 className="text-lg font-bold text-neutral-800 dark:text-cream-100">Notifications</h2>
+              <p className="text-xs text-neutral-400 mt-0.5">Choose how and when you want to be notified</p>
             </div>
-            <div className="divide-y divide-gray-50 dark:divide-gray-800">
+            <div className="divide-y divide-cream-200 dark:divide-neutral-800">
               {[
                 { key: 'email',       label: 'Email Notifications',  desc: 'Receive updates via email' },
                 { key: 'push',        label: 'Push Notifications',   desc: 'Browser push notifications' },
@@ -328,8 +328,8 @@ export const SettingsPage = () => {
               ].map(item => (
                 <div key={item.key} className="flex items-center justify-between px-6 py-4">
                   <div>
-                    <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{item.label}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{item.desc}</p>
+                    <p className="text-sm font-semibold text-neutral-800 dark:text-cream-100">{item.label}</p>
+                    <p className="text-xs text-neutral-400 mt-0.5">{item.desc}</p>
                   </div>
                   <Toggle
                     checked={notifs[item.key as keyof typeof notifs]}
@@ -343,10 +343,10 @@ export const SettingsPage = () => {
 
         {/* WORKSPACE TAB */}
         {activeTab === 'workspace' && (
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
-            <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Workspace</h2>
-              <p className="text-xs text-gray-400 mt-0.5">Configure your workspace settings</p>
+          <div className="bg-cream-100 dark:bg-neutral-900 rounded-2xl border border-cream-300 dark:border-neutral-800 shadow-sm">
+            <div className="px-6 py-4 border-b border-cream-200 dark:border-neutral-800">
+              <h2 className="text-lg font-bold text-neutral-800 dark:text-cream-100">Workspace</h2>
+              <p className="text-xs text-neutral-400 mt-0.5">Configure your workspace settings</p>
             </div>
             <div className="p-6 flex flex-col gap-4">
               <div>
@@ -371,8 +371,8 @@ export const SettingsPage = () => {
               </div>
               <div className="flex items-center justify-between py-2">
                 <div>
-                  <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Auto-archive completed tasks</p>
-                  <p className="text-xs text-gray-400 mt-0.5">Move done tasks to archive after 7 days</p>
+                  <p className="text-sm font-semibold text-neutral-800 dark:text-cream-100">Auto-archive completed tasks</p>
+                  <p className="text-xs text-neutral-400 mt-0.5">Move done tasks to archive after 7 days</p>
                 </div>
                 <Toggle checked={true} onChange={() => {}} />
               </div>
@@ -383,9 +383,9 @@ export const SettingsPage = () => {
         {/* SECURITY TAB */}
         {activeTab === 'security' && (
           <div className="flex flex-col gap-5">
-            <form onSubmit={handlePasswordUpdate} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
-              <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800">
-                <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Change Password</h2>
+            <form onSubmit={handlePasswordUpdate} className="bg-cream-100 dark:bg-neutral-900 rounded-2xl border border-cream-300 dark:border-neutral-800 shadow-sm">
+              <div className="px-6 py-4 border-b border-cream-200 dark:border-neutral-800">
+                <h2 className="text-lg font-bold text-neutral-800 dark:text-cream-100">Change Password</h2>
               </div>
               <div className="p-6 flex flex-col gap-4">
                 {passError && <p className="text-sm text-red-500 bg-red-50 dark:bg-red-950/30 px-3 py-2 rounded-lg">{passError}</p>}
@@ -399,7 +399,7 @@ export const SettingsPage = () => {
                 </div>
                 <div className="flex justify-end">
                   <button type="submit" disabled={passLoading || !currentPassword || !newPassword}
-                    className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 rounded-xl transition-colors shadow-sm">
+                    className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-primary-500 hover:bg-primary-600 disabled:opacity-60 rounded-xl transition-colors shadow-sm">
                     {passLoading ? <Loader2 size={14} className="animate-spin" /> : passSaved ? <Check size={14} /> : null}
                     {passSaved ? 'Updated!' : 'Update Password'}
                   </button>
@@ -407,34 +407,34 @@ export const SettingsPage = () => {
               </div>
             </form>
 
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm">
-              <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800">
-                <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Security Settings</h2>
+            <div className="bg-cream-100 dark:bg-neutral-900 rounded-2xl border border-cream-300 dark:border-neutral-800 shadow-sm">
+              <div className="px-6 py-4 border-b border-cream-200 dark:border-neutral-800">
+                <h2 className="text-lg font-bold text-neutral-800 dark:text-cream-100">Security Settings</h2>
               </div>
-              <div className="divide-y divide-gray-50 dark:divide-gray-800">
+              <div className="divide-y divide-cream-200 dark:divide-neutral-800">
                 <div className="flex items-center justify-between px-6 py-4">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-lg bg-orange-50 dark:bg-orange-950/40 flex items-center justify-center">
                       <Shield size={15} className="text-orange-500" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Two-Factor Authentication</p>
-                      <p className="text-xs text-gray-400">Add an extra layer of security</p>
+                      <p className="text-sm font-semibold text-neutral-800 dark:text-cream-100">Two-Factor Authentication</p>
+                      <p className="text-xs text-neutral-400">Add an extra layer of security</p>
                     </div>
                   </div>
                   <Toggle checked={twoFactor} onChange={() => setTwoFactor(p => !p)} />
                 </div>
-                <div className="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                <div className="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-cream-200 dark:hover:bg-neutral-800 dark:bg-neutral-800 dark:hover:bg-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-800 transition-colors">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                    <div className="w-9 h-9 rounded-lg bg-cream-200 dark:bg-neutral-800 flex items-center justify-center">
                       <Settings size={15} className="text-gray-500" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Active Sessions</p>
-                      <p className="text-xs text-gray-400">1 device currently logged in</p>
+                      <p className="text-sm font-semibold text-neutral-800 dark:text-cream-100">Active Sessions</p>
+                      <p className="text-xs text-neutral-400">1 device currently logged in</p>
                     </div>
                   </div>
-                  <ChevronRight size={15} className="text-gray-400" />
+                  <ChevronRight size={15} className="text-neutral-400" />
                 </div>
               </div>
             </div>
@@ -444,3 +444,7 @@ export const SettingsPage = () => {
     </div>
   );
 };
+
+
+
+

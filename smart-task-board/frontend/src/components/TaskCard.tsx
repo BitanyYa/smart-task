@@ -5,9 +5,9 @@ import { isPast, format } from 'date-fns';
 import type { Task } from '../types/task';
 
 const priorityConfig = {
-  high:   { label: 'High',   border: 'border-l-blue-500',   badge: 'text-blue-600 dark:text-blue-400' },
-  medium: { label: 'Medium', border: 'border-l-gray-400',   badge: 'text-gray-500 dark:text-gray-400' },
-  low:    { label: 'Low',    border: 'border-l-gray-300',   badge: 'text-gray-400 dark:text-gray-500' },
+  high:   { label: 'High',   border: 'border-l-primary-500', badge: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300' },
+  medium: { label: 'Medium', border: 'border-l-sage-400',    badge: 'bg-sage-100 text-sage-700 dark:bg-sage-900/30 dark:text-sage-300' },
+  low:    { label: 'Low',    border: 'border-l-cream-400',   badge: 'bg-cream-200 dark:bg-neutral-950 text-neutral-500 dark:text-neutral-400' },
 };
 
 function getTotalMinutes(task: Task): number {
@@ -38,86 +38,87 @@ export const TaskCard = ({ task, onEdit, onDelete, onOpenDetail }: Props) => {
   const totalMins = getTotalMinutes(task);
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`group relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 border-l-4 ${isUrgent ? 'border-l-orange-500' : p.border} rounded-xl shadow-sm transition-all duration-200 ${isDragging ? 'opacity-40 shadow-xl scale-105 rotate-1' : 'hover:shadow-md hover:-translate-y-0.5'}`}
-    >
+    <div ref={setNodeRef} style={style}
+      className={`group relative bg-cream-100 dark:bg-neutral-900 border border-cream-300 dark:border-neutral-800 border-l-4 ${isUrgent ? 'border-l-primary-500' : p.border} rounded-xl shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 ${isDragging ? 'opacity-40 shadow-xl scale-105 rotate-1' : ''}`}>
+
       {/* Drag handle */}
       <div {...attributes} {...listeners}
         className="flex items-center justify-center w-full py-1.5 cursor-grab active:cursor-grabbing touch-none">
-        <GripVertical size={14} className="text-gray-200 dark:text-gray-600 group-hover:text-gray-400 transition-colors" />
+        <GripVertical size={13} className="text-cream-400 group-hover:text-neutral-400 transition-colors" />
       </div>
 
-      <div className="px-4 pb-4" onClick={() => onOpenDetail(task)}>
-        {/* Priority + actions */}
+      <div className="px-4 pb-4 cursor-pointer" onClick={() => onOpenDetail(task)}>
+        {/* Priority + labels + actions */}
         <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-1.5">
-            <span className={`text-xs font-semibold ${isUrgent ? 'text-orange-500' : p.badge}`}>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${p.badge}`}>
               {isUrgent ? 'URGENT' : p.label}
             </span>
-            {task.isRecurring && <RefreshCw size={10} className="text-gray-400" title="Recurring" />}
+            {task.labels?.slice(0, 1).map(l => (
+              <span key={l} className="flex items-center gap-0.5 text-[10px] font-semibold text-neutral-400 uppercase tracking-widest">
+                <Tag size={8} />{l}
+              </span>
+            ))}
+            {task.isRecurring && <RefreshCw size={10} className="text-neutral-400" />}
             {task.isTimerRunning && (
-              <span className="flex items-center gap-0.5 text-[10px] text-emerald-500 font-semibold animate-pulse">
+              <span className="flex items-center gap-0.5 text-[10px] text-primary-500 font-bold animate-pulse">
                 <Clock size={9} /> Live
               </span>
             )}
           </div>
           <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
             <button onClick={() => onEdit(task)} aria-label="Edit"
-              className="w-6 h-6 flex items-center justify-center rounded-md text-gray-300 dark:text-gray-600 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors">
+              className="w-6 h-6 flex items-center justify-center rounded-md text-neutral-300 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-950/40 transition-colors">
               <Pencil size={11} />
             </button>
             <button onClick={() => onDelete(task.id)} aria-label="Delete"
-              className="w-6 h-6 flex items-center justify-center rounded-md text-gray-300 dark:text-gray-600 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors">
+              className="w-6 h-6 flex items-center justify-center rounded-md text-neutral-300 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors">
               <Trash2 size={11} />
             </button>
           </div>
         </div>
 
         {/* Title */}
-        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 leading-snug mb-1.5 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+        <p className="text-sm font-bold text-neutral-800 dark:text-cream-100 leading-snug mb-1.5 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
           {task.title}
         </p>
 
         {/* Description */}
         {task.description && (
-          <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed line-clamp-2 mb-2">
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed line-clamp-2 mb-2">
             {task.description}
           </p>
         )}
 
-        {/* Labels */}
-        {task.labels?.length > 0 && (
+        {/* Extra labels */}
+        {(task.labels?.length ?? 0) > 1 && (
           <div className="flex flex-wrap gap-1 mb-2">
-            {task.labels.slice(0, 3).map(l => (
-              <span key={l} className="flex items-center gap-0.5 text-[10px] bg-blue-50 dark:bg-blue-950/40 text-blue-500 dark:text-blue-400 px-1.5 py-0.5 rounded-full">
+            {task.labels.slice(1, 3).map(l => (
+              <span key={l} className="flex items-center gap-0.5 text-[10px] bg-cream-200 dark:bg-neutral-700 text-neutral-500 dark:text-neutral-400 px-1.5 py-0.5 rounded-full">
                 <Tag size={8} />{l}
               </span>
             ))}
-            {task.labels.length > 3 && <span className="text-[10px] text-gray-400">+{task.labels.length - 3}</span>}
           </div>
         )}
 
         {/* Footer */}
-        <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-50 dark:border-gray-700/50">
+        <div className="flex items-center justify-between mt-2 pt-2 border-t border-cream-300 dark:border-neutral-800/50">
           <div className="flex items-center gap-2">
             {task.dueDate && (
-              <span className={`flex items-center gap-1 text-[11px] font-medium ${isOverdue ? 'text-red-500' : 'text-gray-400'}`}>
-                <Calendar size={10} />
-                {format(new Date(task.dueDate), 'MMM d')}
+              <span className={`flex items-center gap-1 text-[11px] font-medium ${isOverdue ? 'text-red-500' : 'text-neutral-400'}`}>
+                <Calendar size={10} />{format(new Date(task.dueDate), 'MMM d')}
                 {isOverdue && ' · Overdue'}
               </span>
             )}
           </div>
           <div className="flex items-center gap-2">
             {totalMins > 0 && (
-              <span className="flex items-center gap-0.5 text-[11px] text-gray-400">
+              <span className="flex items-center gap-0.5 text-[11px] text-neutral-400">
                 <Clock size={10} />{totalMins}m
               </span>
             )}
-            {task.comments?.length > 0 && (
-              <span className="flex items-center gap-0.5 text-[11px] text-gray-400">
+            {(task.comments?.length ?? 0) > 0 && (
+              <span className="flex items-center gap-0.5 text-[11px] text-neutral-400">
                 <MessageSquare size={10} />{task.comments.length}
               </span>
             )}
@@ -127,3 +128,6 @@ export const TaskCard = ({ task, onEdit, onDelete, onOpenDetail }: Props) => {
     </div>
   );
 };
+
+
+

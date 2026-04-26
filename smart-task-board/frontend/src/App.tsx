@@ -10,8 +10,8 @@ import './index.css';
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   if (loading) return (
-    <div className="flex items-center justify-center h-screen bg-gray-50">
-      <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+    <div className="flex items-center justify-center h-screen bg-cream-200 dark:bg-neutral-950">
+      <div className="w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
     </div>
   );
   return user ? <>{children}</> : <Navigate to="/" replace />;
@@ -36,3 +36,5 @@ function App() {
 }
 
 export default App;
+
+

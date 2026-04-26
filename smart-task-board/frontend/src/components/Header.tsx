@@ -73,3 +73,6 @@ export const Header = ({ search, onSearch, onNewTask, trashedCount, onOpenTrash 
     </header>
   );
 };
+
+
+

@@ -1,3 +1,65 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+@theme {
+  /* Primary — Terracotta */
+  --color-primary-50:  #fdf5f2;
+  --color-primary-100: #fae8e1;
+  --color-primary-200: #f5cfc3;
+  --color-primary-300: #ecad99;
+  --color-primary-400: #e08f76;
+  --color-primary-500: #d67d61;
+  --color-primary-600: #c06548;
+  --color-primary-700: #a04f37;
+  --color-primary-800: #7d3d2b;
+  --color-primary-900: #5a2c1e;
+
+  /* Secondary — Sage Green */
+  --color-sage-50:  #f4f7f4;
+  --color-sage-100: #e4ede3;
+  --color-sage-200: #c8dbc6;
+  --color-sage-300: #a5c2a2;
+  --color-sage-400: #8da38a;
+  --color-sage-500: #6e8a6b;
+  --color-sage-600: #567053;
+  --color-sage-700: #435840;
+  --color-sage-800: #334330;
+  --color-sage-900: #232e21;
+
+  /* Tertiary — Warm Cream */
+  --color-cream-50:  #fdfcfb;
+  --color-cream-100: #f8f5f0;
+  --color-cream-200: #f2ede8;
+  --color-cream-300: #e8e2d9;
+  --color-cream-400: #d9d0c4;
+  --color-cream-500: #c4b8a8;
+  --color-cream-600: #a89880;
+  --color-cream-700: #8a7a62;
+  --color-cream-800: #6b5e48;
+  --color-cream-900: #4a4030;
+
+  /* Neutral — Warm Gray */
+  --color-neutral-50:  #f7f6f5;
+  --color-neutral-100: #edecea;
+  --color-neutral-200: #d8d6d3;
+  --color-neutral-300: #bfbcb8;
+  --color-neutral-400: #a09d99;
+  --color-neutral-500: #5d5a58;
+  --color-neutral-600: #4a4745;
+  --color-neutral-700: #383533;
+  --color-neutral-800: #272422;
+  --color-neutral-900: #181614;
+
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+* { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+
+html { background-color: #f2ede8; color: #272422; }
+html[data-theme='dark'] { background-color: #181614; color: #f2ede8; }
+
+html[data-theme='dark'] ::-webkit-scrollbar { width: 6px; }
+html[data-theme='dark'] ::-webkit-scrollbar-track { background: #272422; }
+html[data-theme='dark'] ::-webkit-scrollbar-thumb { background: #4a4745; border-radius: 10px; }

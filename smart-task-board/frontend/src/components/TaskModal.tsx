@@ -51,14 +51,14 @@ export const TaskModal = ({ task, onClose, onSave }: Props) => {
     onClose();
   };
 
-  const inputCls = "w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-400/40 focus:border-blue-300 dark:focus:border-blue-600 focus:bg-white dark:focus:bg-gray-700 transition-all";
+  const inputCls = "w-full bg-cream-100 dark:bg-neutral-900 border border-cream-400 dark:border-neutral-700 rounded-xl px-3.5 py-2.5 text-sm text-neutral-800 dark:text-cream-100 placeholder-neutral-400 outline-none focus:ring-2 focus:ring-primary-400/30 focus:border-primary-400 dark:focus:border-primary-500 focus:bg-white dark:focus:bg-neutral-700 transition-all";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/25 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-6 pt-5 pb-4 sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
-          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">{task ? 'Edit Task' : 'New Task'}</h2>
-          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+      <div className="bg-cream-100 dark:bg-neutral-900 rounded-2xl shadow-xl border border-cream-400 dark:border-neutral-700 w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-6 pt-5 pb-4 sticky top-0 bg-cream-100 dark:bg-neutral-900 border-b border-cream-300 dark:border-neutral-800">
+          <h2 className="text-base font-semibold text-neutral-800 dark:text-cream-100">{task ? 'Edit Task' : 'New Task'}</h2>
+          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-400 hover:text-neutral-700 dark:text-neutral-300 hover:bg-cream-200 dark:hover:bg-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-800 transition-colors">
             <X size={15} />
           </button>
         </div>
@@ -140,8 +140,8 @@ export const TaskModal = ({ task, onClose, onSave }: Props) => {
           </div>
 
           <div className="flex justify-end gap-2 pt-1 border-t border-gray-100 dark:border-gray-800">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors">Cancel</button>
-            <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors shadow-sm">
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:bg-cream-200 dark:hover:bg-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-800 rounded-xl transition-colors">Cancel</button>
+            <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-xl transition-colors shadow-sm">
               {task ? 'Save Changes' : 'Create Task'}
             </button>
           </div>
@@ -150,3 +150,6 @@ export const TaskModal = ({ task, onClose, onSave }: Props) => {
     </div>
   );
 };
+
+
+

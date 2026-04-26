@@ -61,27 +61,35 @@ export const TaskBoardPage = ({ tasks, localTasks, onEdit, onDelete, onOpenDetai
       {/* Header */}
       <div className="flex items-start justify-between mb-7">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">Task Board</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Manage and track your tasks. Press <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono">N</kbd> to create.
+          <h1 className="text-2xl font-bold text-neutral-800 dark:text-cream-100 tracking-tight">Task Board</h1>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+            Manage and track your tasks. Press <kbd className="px-1.5 py-0.5 bg-cream-200 dark:bg-neutral-800 rounded text-xs font-mono">N</kbd> to create.
           </p>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          {/* Search */}
+          <div className="flex items-center gap-2 bg-cream-100 dark:bg-neutral-800 border border-cream-300 dark:border-neutral-700 rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-primary-400/30 transition-all shadow-sm">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-neutral-400 shrink-0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Search tasks..." aria-label="Search tasks"
+              className="bg-transparent outline-none text-sm text-neutral-700 dark:text-neutral-300 placeholder-neutral-400 w-32" />
+          </div>
+
           {/* Filter */}
           <div className="relative">
             <button
               onClick={() => { setShowFilter(p => !p); setShowSort(false); }}
               className={`flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium border rounded-lg transition-colors shadow-sm ${
                 activeFilterCount > 0
-                  ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-300 dark:border-blue-700 text-blue-600 dark:text-blue-400'
-                  : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  ? 'bg-primary-50 dark:bg-primary-950/40 border-primary-300 dark:border-primary-700 text-primary-600 dark:text-primary-400'
+                  : 'bg-cream-100 dark:bg-neutral-800 border-cream-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-cream-200 dark:hover:bg-neutral-700'
               }`}
             >
               <SlidersHorizontal size={13} />
               Filter
               {activeFilterCount > 0 && (
-                <span className="w-4 h-4 bg-blue-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                <span className="w-4 h-4 bg-primary-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                   {activeFilterCount}
                 </span>
               )}
@@ -98,8 +106,8 @@ export const TaskBoardPage = ({ tasks, localTasks, onEdit, onDelete, onOpenDetai
               onClick={() => { setShowSort(p => !p); setShowFilter(false); }}
               className={`flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium border rounded-lg transition-colors shadow-sm ${
                 sort.field !== 'createdAt' || sort.dir !== 'desc'
-                  ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-300 dark:border-blue-700 text-blue-600 dark:text-blue-400'
-                  : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  ? 'bg-primary-50 dark:bg-primary-950/40 border-primary-300 dark:border-primary-700 text-primary-600 dark:text-primary-400'
+                  : 'bg-cream-100 dark:bg-neutral-800 border-cream-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-cream-200 dark:hover:bg-neutral-700'
               }`}
             >
               <ArrowUpDown size={13} />
@@ -114,7 +122,7 @@ export const TaskBoardPage = ({ tasks, localTasks, onEdit, onDelete, onOpenDetai
           {/* New Task */}
           <button
             onClick={onAdd}
-            className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors shadow-sm"
+            className="flex items-center gap-1.5 bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors shadow-sm"
           >
             <Plus size={14} /> New Task
           </button>
@@ -140,3 +148,6 @@ export const TaskBoardPage = ({ tasks, localTasks, onEdit, onDelete, onOpenDetai
     </div>
   );
 };
+
+
+

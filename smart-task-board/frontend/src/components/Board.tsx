@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent, DragOverEvent } from '@dnd-kit/core';
-import { CheckCircle2, Clock, AlertTriangle, ListTodo, Plus, ArrowRight } from 'lucide-react';
+import { Plus, Calendar } from 'lucide-react';
 import type { Task, Status } from '../types/task';
 import type { Page } from '../types/navigation';
 import { TaskModal } from './TaskModal';
@@ -16,11 +15,13 @@ import { TeamsPage } from '../pages/TeamsPage';
 import { ProjectsPage } from '../pages/ProjectsPage';
 import { TaskBoardPage } from '../pages/TaskBoardPage';
 import { useTasks } from '../hooks/useTasks';
-import { isPast, formatDistanceToNow } from 'date-fns';
+import { useAuth } from '../context/AuthContext';
+import { isPast, format } from 'date-fns';
 
 const STATUSES: Status[] = ['todo', 'inprogress', 'done'];
 
 export const Board = () => {
+  const { user } = useAuth();
   const {
     tasks, trashed, loading, error,
     addTask, editTask, removeTask, restoreTask, permanentDelete,
@@ -91,13 +92,13 @@ export const Board = () => {
   }, [tasks]);
 
   if (loading) return (
-    <div className="flex items-center justify-center h-screen bg-gray-50 dark:bg-gray-950">
-      <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+    <div className="flex items-center justify-center h-screen bg-cream-200 dark:bg-neutral-950">
+      <div className="w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
     </div>
   );
 
   if (error) return (
-    <div className="flex items-center justify-center h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="flex items-center justify-center h-screen bg-cream-200 dark:bg-neutral-950">
       <p className="text-sm text-red-400">{error}</p>
     </div>
   );
@@ -131,93 +132,143 @@ export const Board = () => {
       case 'projects':
         return <ProjectsPage />;
       default: {
-        const done = tasks.filter(t => t.status === 'done').length;
-        const inProgress = tasks.filter(t => t.status === 'inprogress').length;
-        const overdue = tasks.filter(t => t.dueDate && isPast(new Date(t.dueDate)) && t.status !== 'done');
-        const recent = [...tasks].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5);
+        const todo       = tasks.filter(t => t.status === 'todo');
+        const inProg     = tasks.filter(t => t.status === 'inprogress');
+        const done       = tasks.filter(t => t.status === 'done');
+        const overdue    = tasks.filter(t => t.dueDate && isPast(new Date(t.dueDate)) && t.status !== 'done');
+        const hour       = new Date().getHours();
+        const greeting   = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+        const activeProj = tasks.length > 0 ? Math.ceil(tasks.length / 3) : 0;
+
+        const inspirations = [
+          { quote: '"Design is not just what it looks like and feels like. Design is how it works."', author: '— Steve Jobs' },
+          { quote: '"The best way to predict the future is to create it."', author: '— Peter Drucker' },
+          { quote: '"Done is better than perfect."', author: '— Sheryl Sandberg' },
+        ];
+        const inspiration = inspirations[new Date().getDay() % inspirations.length];
+
+        // Theme-only avatar colors using primary/sage/neutral palette
+        const avatarColors = ['bg-primary-500','bg-sage-500','bg-primary-400','bg-sage-400','bg-primary-600'];
+
+        const MiniCard = ({ task }: { task: Task }) => (
+          <div onClick={() => setDetailTask(task)}
+            className="bg-cream-100 dark:bg-neutral-900 border border-cream-300 dark:border-neutral-800 rounded-xl p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer">
+            {task.labels?.length > 0 && (
+              <span className="inline-block text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-cream-300 dark:bg-neutral-700 text-neutral-500 dark:text-neutral-400 mb-2">
+                {task.labels[0]}
+              </span>
+            )}
+            <p className={`text-sm font-bold leading-snug mb-1.5 ${task.status === 'done' ? 'line-through text-neutral-400' : 'text-neutral-800 dark:text-cream-100'}`}>
+              {task.title}
+            </p>
+            {task.description && (
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed line-clamp-2 mb-3">{task.description}</p>
+            )}
+            <div className="flex items-center justify-between mt-2">
+              <div className="flex items-center gap-1.5 text-[11px] text-neutral-400">
+                {task.dueDate && <><Calendar size={10} />{format(new Date(task.dueDate), 'MMM d')}</>}
+                {task.priority === 'high' && !task.dueDate && <span className="text-primary-500 font-semibold">High Priority</span>}
+                {task.status === 'done' && <span className="text-sage-500 font-semibold">Shippable</span>}
+              </div>
+              <div className={`w-6 h-6 rounded-full ${avatarColors[task.title.length % avatarColors.length]} flex items-center justify-center text-white text-[10px] font-bold`}>U</div>
+            </div>
+          </div>
+        );
+
+        const ColSection = ({ label, count, dot, tasks: colTasks }: { label: string; count: number; dot: string; tasks: Task[] }) => (
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2 mb-1">
+              <span className={`w-2 h-2 rounded-full ${dot}`} />
+              <span className="text-xs font-black uppercase tracking-widest text-neutral-500 dark:text-neutral-400">{label}</span>
+              <span className="text-xs font-bold bg-neutral-800 dark:bg-cream-200 dark:bg-neutral-950 text-white dark:text-neutral-800 dark:text-cream-100 px-1.5 py-0.5 rounded-full">{count}</span>
+              <button onClick={() => setEditingTask(null)}
+                className="ml-auto w-5 h-5 flex items-center justify-center rounded-full border border-cream-400 dark:border-neutral-600 text-neutral-400 hover:text-primary-500 hover:border-primary-400 transition-colors">
+                <Plus size={11} />
+              </button>
+            </div>
+            {colTasks.slice(0, 2).map(t => <MiniCard key={t.id} task={t} />)}
+            {colTasks.length === 0 && (
+              <div className="flex items-center justify-center h-16 border-2 border-dashed border-cream-400 dark:border-neutral-700 rounded-xl text-xs text-neutral-300">
+                No tasks
+              </div>
+            )}
+          </div>
+        );
 
         return (
-          <div className="px-8 py-7">
-            <div className="flex items-start justify-between mb-7">
+          <div className="px-8 py-7 space-y-6">
+            {/* Greeting row */}
+            <div className="flex items-center justify-between gap-4">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">Dashboard</h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Welcome back. Here's what's happening.</p>
+                <h1 className="text-2xl font-bold text-neutral-800 dark:text-cream-100 tracking-tight">
+                  {greeting}, {user?.name?.split(' ')[0]}.
+                </h1>
+                <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
+                  You have {inProg.length} task{inProg.length !== 1 ? 's' : ''} in progress{overdue.length > 0 ? ` and ${overdue.length} overdue` : ''} today.
+                </p>
               </div>
-              <button onClick={() => setEditingTask(null)}
-                className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors shadow-sm">
-                <Plus size={14} /> New Task
+              <div className="bg-cream-100 dark:bg-neutral-900 border border-cream-300 dark:border-neutral-800 rounded-xl px-4 py-3 flex items-center gap-3 shadow-sm shrink-0">
+                <span className="text-xl">😊</span>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Team Mood</p>
+                  <p className="text-sm font-bold text-neutral-800 dark:text-cream-100">Feeling Productive</p>
+                </div>
+                <div className="flex -space-x-1.5 ml-2">
+                  {['bg-primary-500','bg-sage-500','bg-primary-400'].map((c, i) => (
+                    <div key={i} className={`w-6 h-6 rounded-full ${c} border-2 border-cream-100 dark:border-neutral-900 flex items-center justify-center text-white text-[9px] font-bold`}>U</div>
+                  ))}
+                  <div className="w-6 h-6 rounded-full bg-cream-300 dark:bg-neutral-700 border-2 border-cream-100 dark:border-neutral-900 flex items-center justify-center text-neutral-500 dark:text-neutral-400 text-[9px] font-bold">+{Math.max(0, tasks.length - 3)}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Daily inspiration */}
+            <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800/40 rounded-xl px-6 py-5 shadow-sm flex items-center justify-between gap-6">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl text-primary-300 dark:text-primary-700 leading-none mt-0.5">"</span>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-primary-500 mb-1.5">Daily Inspiration</p>
+                  <p className="text-sm text-neutral-700 dark:text-neutral-300 italic leading-relaxed">{inspiration.quote}</p>
+                  <p className="text-xs text-neutral-400 mt-1">{inspiration.author}</p>
+                </div>
+              </div>
+              <button onClick={() => setActivePage('teams')}
+                className="shrink-0 px-4 py-2 text-sm font-semibold text-neutral-700 dark:text-neutral-300 bg-cream-200 dark:bg-neutral-950 hover:bg-cream-300 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded-lg transition-colors">
+                Share with Team
               </button>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-              {[
-                { icon: ListTodo,      label: 'Total Tasks', value: tasks.length,   color: 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400' },
-                { icon: Clock,         label: 'In Progress', value: inProgress,     color: 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400' },
-                { icon: CheckCircle2,  label: 'Completed',   value: done,           color: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400' },
-                { icon: AlertTriangle, label: 'Overdue',     value: overdue.length, color: 'bg-red-50 dark:bg-red-950/40 text-red-500 dark:text-red-400' },
-              ].map(s => (
-                <div key={s.label} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 shadow-sm flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${s.color}`}>
-                    <s.icon size={18} />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{s.label}</p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{s.value}</p>
-                  </div>
-                </div>
-              ))}
+            {/* Mini kanban */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <ColSection label="Backlog"     count={todo.length}   dot="bg-neutral-400"  tasks={todo} />
+              <ColSection label="In Progress" count={inProg.length} dot="bg-primary-500"  tasks={inProg} />
+              <ColSection label="Ready"       count={done.length}   dot="bg-sage-500"     tasks={done} />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {/* Recent tasks */}
-              <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
-                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800">
-                  <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Recent Tasks</h2>
-                  <button onClick={() => setActivePage('my-tasks')} className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium">
-                    View all <ArrowRight size={11} />
-                  </button>
-                </div>
-                <div className="divide-y divide-gray-50 dark:divide-gray-800">
-                  {recent.length === 0 && <p className="text-sm text-gray-400 text-center py-8">No tasks yet</p>}
-                  {recent.map(t => (
-                    <div key={t.id} onClick={() => setDetailTask(t)}
-                      className="flex items-center justify-between px-5 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className={`w-2 h-2 rounded-full shrink-0 ${t.status === 'done' ? 'bg-emerald-400' : t.status === 'inprogress' ? 'bg-blue-500' : 'bg-gray-300'}`} />
-                        <p className={`text-sm font-medium truncate ${t.status === 'done' ? 'line-through text-gray-400' : 'text-gray-800 dark:text-gray-200'}`}>{t.title}</p>
-                      </div>
-                      <span className="text-xs text-gray-400 shrink-0 ml-3">{formatDistanceToNow(new Date(t.createdAt), { addSuffix: true })}</span>
-                    </div>
+            {/* Collaborators */}
+            <div className="bg-cream-100 dark:bg-neutral-900 border border-cream-300 dark:border-neutral-800 rounded-xl px-6 py-5 shadow-sm flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-4">
+                <div className="flex -space-x-2">
+                  {['bg-primary-500','bg-sage-500','bg-primary-400','bg-sage-400','bg-primary-600'].map((c, i) => (
+                    <div key={i} className={`w-9 h-9 rounded-full ${c} border-2 border-cream-100 dark:border-neutral-900 flex items-center justify-center text-white text-xs font-bold`}>U</div>
                   ))}
+                  <div className="w-9 h-9 rounded-full bg-cream-300 dark:bg-neutral-700 border-2 border-cream-100 dark:border-neutral-900 flex items-center justify-center text-neutral-500 dark:text-neutral-400 text-xs font-bold">+{Math.max(0, tasks.length)}</div>
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-neutral-400 mb-0.5">Collaborators</p>
+                  <p className="text-sm font-bold text-neutral-800 dark:text-cream-100">{tasks.length} Tasks active</p>
+                  <p className="text-xs text-neutral-400">{activeProj} project stream{activeProj !== 1 ? 's' : ''} running</p>
                 </div>
               </div>
-
-              {/* Overdue */}
-              <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
-                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800">
-                  <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Overdue Tasks</h2>
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${overdue.length > 0 ? 'bg-red-100 dark:bg-red-950/40 text-red-500' : 'bg-gray-100 dark:bg-gray-800 text-gray-400'}`}>
-                    {overdue.length}
-                  </span>
-                </div>
-                <div className="divide-y divide-gray-50 dark:divide-gray-800">
-                  {overdue.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-8 gap-1">
-                      <CheckCircle2 size={20} className="text-emerald-400" />
-                      <p className="text-sm text-gray-400">All caught up!</p>
-                    </div>
-                  )}
-                  {overdue.slice(0, 5).map(t => (
-                    <div key={t.id} onClick={() => setDetailTask(t)}
-                      className="flex items-center justify-between px-5 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors">
-                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{t.title}</p>
-                      <span className="text-xs text-red-500 font-medium shrink-0 ml-3">
-                        {formatDistanceToNow(new Date(t.dueDate!), { addSuffix: true })}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+              <div className="flex items-center gap-2">
+                <button onClick={() => setActivePage('teams')}
+                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-neutral-700 dark:text-neutral-300 border border-cream-400 dark:border-neutral-600 rounded-lg hover:bg-cream-200 dark:hover:bg-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-700 transition-colors">
+                  Manage Roles
+                </button>
+                <button onClick={() => setActivePage('teams')}
+                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors shadow-sm">
+                  <Plus size={13} /> Invite Team
+                </button>
               </div>
             </div>
           </div>
@@ -227,7 +278,7 @@ export const Board = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-950 overflow-hidden">
+    <div className="flex h-screen bg-cream-200 dark:bg-neutral-950 overflow-hidden">
       <Sidebar activePage={activePage} onNavigate={setActivePage} trashedCount={trashed.length} onNewTask={() => setEditingTask(null)} />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Navbar search={search} onSearch={setSearch} tasks={tasks} onNavigate={setActivePage} />
@@ -250,3 +301,8 @@ export const Board = () => {
     </div>
   );
 };
+
+
+
+
+
