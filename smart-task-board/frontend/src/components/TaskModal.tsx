@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { X, Plus, Tag } from 'lucide-react';
 import type { Task, CreateTaskDto, Priority, Status } from '../types/task';
+import { useAuth } from '../context/AuthContext';
+import { fetchProjects } from '../api/projects';
+import type { Project } from '../api/projects';
 
 interface Props {
   task?: Task | null;
@@ -9,6 +12,7 @@ interface Props {
 }
 
 export const TaskModal = ({ task, onClose, onSave }: Props) => {
+  const { token } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<Priority>('medium');
@@ -18,6 +22,12 @@ export const TaskModal = ({ task, onClose, onSave }: Props) => {
   const [labelInput, setLabelInput] = useState('');
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurringInterval, setRecurringInterval] = useState<'daily'|'weekly'|'monthly'>('weekly');
+  const [projectId, setProjectId] = useState<string>('');
+  const [projects, setProjects] = useState<Project[]>([]);
+
+  useEffect(() => {
+    if (token) fetchProjects(token).then(setProjects).catch(() => {});
+  }, [token]);
 
   useEffect(() => {
     if (task) {
@@ -29,6 +39,7 @@ export const TaskModal = ({ task, onClose, onSave }: Props) => {
       setLabels(task.labels || []);
       setIsRecurring(task.isRecurring || false);
       setRecurringInterval(task.recurringInterval || 'weekly');
+      setProjectId((task as any).project?._id || (task as any).project || '');
     }
   }, [task]);
 
@@ -47,6 +58,7 @@ export const TaskModal = ({ task, onClose, onSave }: Props) => {
       labels,
       isRecurring,
       recurringInterval: isRecurring ? recurringInterval : undefined,
+      project: projectId || null,
     });
     onClose();
   };
@@ -98,8 +110,19 @@ export const TaskModal = ({ task, onClose, onSave }: Props) => {
 
           {/* Due Date */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Due Date</label>
+            <label className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Due Date</label>
             <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className={inputCls} />
+          </div>
+
+          {/* Project */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-neutral-500 dark:text-neutral-400">Project <span className="text-neutral-300 dark:text-neutral-600">(optional)</span></label>
+            <select value={projectId} onChange={e => setProjectId(e.target.value)} className={inputCls}>
+              <option value="">No project</option>
+              {projects.map(p => (
+                <option key={p._id} value={p._id}>{p.name}</option>
+              ))}
+            </select>
           </div>
 
           {/* Labels */}

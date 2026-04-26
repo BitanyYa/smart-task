@@ -28,6 +28,7 @@ export interface ITask extends Document {
   status: Status;
   priority: Priority;
   owner: Types.ObjectId;
+  project?: Types.ObjectId | null;
   labels: string[];
   dueDate?: Date;
   isRecurring: boolean;

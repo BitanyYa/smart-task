@@ -49,6 +49,7 @@ export type CreateTaskDto = {
   dueDate?: string;
   isRecurring?: boolean;
   recurringInterval?: 'daily' | 'weekly' | 'monthly';
+  project?: string | null;
 };
 
 export type UpdateTaskDto = Partial<CreateTaskDto>;

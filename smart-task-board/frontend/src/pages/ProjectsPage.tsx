@@ -96,12 +96,6 @@ export const ProjectsPage = () => {
     setOpenMenu(null);
   };
 
-  const handleProgressChange = async (id: string, progress: number) => {
-    // Optimistic update first, then persist
-    setProjects(prev => prev.map(p => p._id === id ? { ...p, progress } : p));
-    await projectsApi.updateProject(token!, id, { progress });
-  };
-
   const pinned = projects.filter(p => p.pinned);
   const filtered = projects
     .filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.description.toLowerCase().includes(search.toLowerCase()))
@@ -228,10 +222,6 @@ export const ProjectsPage = () => {
                 <div className="w-full h-1.5 bg-cream-300 dark:bg-neutral-700 rounded-full overflow-hidden">
                   <div className={`h-full rounded-full transition-all ${pc}`} style={{ width: `${project.progress}%` }} />
                 </div>
-                <input type="range" min={0} max={100} defaultValue={project.progress}
-                  onMouseUp={e => handleProgressChange(project._id, Number((e.target as HTMLInputElement).value))}
-                  onTouchEnd={e => handleProgressChange(project._id, Number((e.target as HTMLInputElement).value))}
-                  className="w-full mt-1 accent-primary-500 cursor-pointer h-1 opacity-0 hover:opacity-100 transition-opacity" />
               </div>
 
               {/* Footer */}
