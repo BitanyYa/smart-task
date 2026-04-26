@@ -1,9 +1,36 @@
 import axios from 'axios';
 import type { Task, CreateTaskDto, UpdateTaskDto } from '../types/task';
+import { refreshAccessToken } from './auth';
 
-const base = axios.create({ baseURL: 'http://localhost:4000/api' });
+const base = axios.create({ baseURL: import.meta.env.VITE_API_URL });
 
 const auth = (token: string) => ({ headers: { Authorization: `Bearer ${token}` } });
+
+// Auto-refresh on 401
+base.interceptors.response.use(
+  res => res,
+  async (err) => {
+    const original = err.config;
+    if (err.response?.status === 401 && !original._retry) {
+      original._retry = true;
+      const rt = localStorage.getItem('refreshToken');
+      if (rt) {
+        try {
+          const data = await refreshAccessToken(rt);
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('refreshToken', data.refreshToken);
+          original.headers['Authorization'] = `Bearer ${data.token}`;
+          return base(original);
+        } catch {
+          localStorage.removeItem('token');
+          localStorage.removeItem('refreshToken');
+          window.location.href = '/login';
+        }
+      }
+    }
+    return Promise.reject(err);
+  }
+);
 
 export const fetchTasks   = (token: string) => base.get<Task[]>('/tasks', auth(token)).then(r => r.data.map(normalize));
 export const fetchTrashed = (token: string) => base.get<Task[]>('/tasks/trash', auth(token)).then(r => r.data.map(normalize));

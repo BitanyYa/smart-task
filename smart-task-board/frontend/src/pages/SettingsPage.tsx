@@ -58,7 +58,7 @@ export const SettingsPage = () => {
     setProfileError('');
     setProfileLoading(true);
     try {
-      await axios.patch('http://localhost:4000/api/auth/profile',
+      await axios.patch(`${import.meta.env.VITE_API_URL}/auth/profile`,
         { name, email },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -76,7 +76,7 @@ export const SettingsPage = () => {
     setPassError('');
     setPassLoading(true);
     try {
-      await axios.patch('http://localhost:4000/api/auth/password',
+      await axios.patch(`${import.meta.env.VITE_API_URL}/auth/password`,
         { currentPassword, newPassword },
         { headers: { Authorization: `Bearer ${token}` } }
       );
