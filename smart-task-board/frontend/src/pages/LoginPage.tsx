@@ -106,7 +106,7 @@ export const LoginPage = () => {
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="text-xs font-bold text-neutral-500 dark:text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">Password</label>
-                  <a href="#" className="text-xs font-semibold text-primary-500 hover:underline">Forgot password?</a>
+                  <Link to="/forgot-password" className="text-xs font-semibold text-primary-500 hover:underline">Forgot password?</Link>
                 </div>
                 <div className="relative">
                   <input type={showPass ? 'text' : 'password'} value={password}

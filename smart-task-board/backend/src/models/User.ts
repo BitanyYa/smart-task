@@ -6,15 +6,25 @@ export interface IUser extends Document {
   email: string;
   password: string;
   avatar?: string;
+  isVerified: boolean;
+  verificationToken?: string | null;
+  verificationExpires?: Date | null;
+  resetPasswordToken?: string | null;
+  resetPasswordExpires?: Date | null;
   createdAt: Date;
   comparePassword(candidate: string): Promise<boolean>;
 }
 
 const UserSchema = new Schema<IUser>({
-  name:     { type: String, required: true, trim: true },
-  email:    { type: String, required: true, unique: true, lowercase: true, trim: true },
-  password: { type: String, required: true, minlength: 6 },
-  avatar:   { type: String },
+  name:                   { type: String, required: true, trim: true },
+  email:                  { type: String, required: true, unique: true, lowercase: true, trim: true },
+  password:               { type: String, required: true, minlength: 6 },
+  avatar:                 { type: String },
+  isVerified:             { type: Boolean, default: false },
+  verificationToken:      { type: String, default: null },
+  verificationExpires:    { type: Date, default: null },
+  resetPasswordToken:     { type: String, default: null },
+  resetPasswordExpires:   { type: Date, default: null },
 }, { timestamps: true });
 
 // Hash password before save
