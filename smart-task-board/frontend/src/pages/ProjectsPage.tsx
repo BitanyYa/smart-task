@@ -78,22 +78,28 @@ export const ProjectsPage = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this project?')) return;
-    await projectsApi.deleteProject(token!, id);
-    setProjects(prev => prev.filter(p => p._id !== id));
+  const handlePin = async (id: string) => {
+    // Optimistic update
+    setProjects(prev => prev.map(p => p._id === id ? { ...p, pinned: !p.pinned } : p));
     setOpenMenu(null);
+    // Sync to backend in background
+    projectsApi.togglePin(token!, id).catch(() => {
+      // Revert on failure
+      setProjects(prev => prev.map(p => p._id === id ? { ...p, pinned: !p.pinned } : p));
+    });
   };
 
-  const handlePin = async (id: string) => {
-    const updated = await projectsApi.togglePin(token!, id);
-    setProjects(prev => prev.map(p => p._id === id ? updated : p));
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete this project?')) return;
+    setProjects(prev => prev.filter(p => p._id !== id)); // optimistic
+    await projectsApi.deleteProject(token!, id);
     setOpenMenu(null);
   };
 
   const handleProgressChange = async (id: string, progress: number) => {
-    const updated = await projectsApi.updateProject(token!, id, { progress });
-    setProjects(prev => prev.map(p => p._id === id ? updated : p));
+    // Optimistic update first, then persist
+    setProjects(prev => prev.map(p => p._id === id ? { ...p, progress } : p));
+    await projectsApi.updateProject(token!, id, { progress });
   };
 
   const pinned = projects.filter(p => p.pinned);
@@ -222,9 +228,9 @@ export const ProjectsPage = () => {
                 <div className="w-full h-1.5 bg-cream-300 dark:bg-neutral-700 rounded-full overflow-hidden">
                   <div className={`h-full rounded-full transition-all ${pc}`} style={{ width: `${project.progress}%` }} />
                 </div>
-                {/* Editable progress */}
-                <input type="range" min={0} max={100} value={project.progress}
-                  onChange={e => handleProgressChange(project._id, Number(e.target.value))}
+                <input type="range" min={0} max={100} defaultValue={project.progress}
+                  onMouseUp={e => handleProgressChange(project._id, Number((e.target as HTMLInputElement).value))}
+                  onTouchEnd={e => handleProgressChange(project._id, Number((e.target as HTMLInputElement).value))}
                   className="w-full mt-1 accent-primary-500 cursor-pointer h-1 opacity-0 hover:opacity-100 transition-opacity" />
               </div>
 

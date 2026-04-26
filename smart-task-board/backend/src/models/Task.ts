@@ -62,6 +62,7 @@ const TaskSchema = new Schema<ITask>({
   status:      { type: String, enum: ['todo','inprogress','done'], default: 'todo' },
   priority:    { type: String, enum: ['low','medium','high'], default: 'medium' },
   owner:       { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  project:     { type: Schema.Types.ObjectId, ref: 'Project', default: null },
   labels:      [{ type: String, trim: true }],
   dueDate:     { type: Date },
   isRecurring: { type: Boolean, default: false },
