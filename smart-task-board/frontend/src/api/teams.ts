@@ -34,3 +34,7 @@ export const removeMember = (token: string, userId: string) => base.delete(`/tea
 export const changeRole   = (token: string, userId: string, role: TeamRole) => base.patch(`/teams/my/members/${userId}/role`, { role }, auth(token)).then(r => r.data);
 export const renameTeam   = (token: string, name: string) => base.patch('/teams/my', { name }, auth(token)).then(r => r.data);
 export const cancelInvite = (token: string, inviteToken: string) => base.delete(`/teams/my/invites/${inviteToken}`, auth(token)).then(r => r.data);
+export const addMemberToProject = (token: string, userId: string, projectId: string) => 
+  base.post(`/teams/my/members/${userId}/projects/${projectId}`, {}, auth(token)).then(r => r.data);
+export const removeMemberFromProject = (token: string, userId: string, projectId: string) => 
+  base.delete(`/teams/my/members/${userId}/projects/${projectId}`, auth(token)).then(r => r.data);

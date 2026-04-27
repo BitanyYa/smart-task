@@ -288,4 +288,64 @@ router.delete('/my/invites/:token', protect, async (req: AuthRequest, res: Respo
   }
 });
 
+// ── POST /api/teams/my/members/:userId/projects/:projectId ─
+router.post('/my/members/:userId/projects/:projectId', protect, async (req: AuthRequest, res: Response) => {
+  try {
+    const { userId, projectId } = req.params;
+    
+    // Verify user is team owner or admin
+    const team = await Team.findOne({
+      $or: [{ owner: req.userId }, { 'members': { $elemMatch: { user: req.userId, role: 'admin' } } }]
+    });
+    if (!team) return res.status(404).json({ message: 'Team not found or insufficient permissions' });
+
+    // Verify the user is a team member
+    const isMember = team.members.some((m: any) => String(m.user) === userId);
+    if (!isMember) return res.status(404).json({ message: 'User is not a team member' });
+
+    // Add user to project
+    const { Project } = await import('../models/Project');
+    const project = await Project.findById(projectId);
+    if (!project) return res.status(404).json({ message: 'Project not found' });
+
+    // Check if already a member
+    if (project.members.some((m: any) => String(m) === userId)) {
+      return res.status(400).json({ message: 'User is already a project member' });
+    }
+
+    project.members.push(userId as any);
+    await project.save();
+
+    res.json({ message: 'Member added to project', project });
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ── DELETE /api/teams/my/members/:userId/projects/:projectId 
+router.delete('/my/members/:userId/projects/:projectId', protect, async (req: AuthRequest, res: Response) => {
+  try {
+    const { userId, projectId } = req.params;
+    
+    // Verify user is team owner or admin
+    const team = await Team.findOne({
+      $or: [{ owner: req.userId }, { 'members': { $elemMatch: { user: req.userId, role: 'admin' } } }]
+    });
+    if (!team) return res.status(404).json({ message: 'Team not found or insufficient permissions' });
+
+    // Remove user from project
+    const { Project } = await import('../models/Project');
+    const project = await Project.findByIdAndUpdate(
+      projectId,
+      { $pull: { members: userId } },
+      { new: true }
+    );
+    if (!project) return res.status(404).json({ message: 'Project not found' });
+
+    res.json({ message: 'Member removed from project', project });
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 export default router;

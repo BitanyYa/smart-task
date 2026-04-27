@@ -40,6 +40,8 @@ export const TeamsPage = () => {
   const [teamName, setTeamName] = useState('');
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
+  const [showProjectAssign, setShowProjectAssign] = useState(false);
+  const [assigningMemberId, setAssigningMemberId] = useState<string | null>(null);
 
   const isOwner = data?.team.owner === user?._id ||
     data?.team.members.find(m => m.user._id === user?._id)?.role === 'admin';
@@ -107,6 +109,20 @@ export const TeamsPage = () => {
     } catch {
       setTeamName(data?.team.name || '');
       setEditingTeamName(false);
+    }
+  };
+
+  const handleAssignToProject = async (projectId: string) => {
+    if (!assigningMemberId) return;
+    try {
+      await teamsApi.addMemberToProject(token!, assigningMemberId, projectId);
+      setShowProjectAssign(false);
+      setAssigningMemberId(null);
+      // Refresh projects to show updated member count
+      const updatedProjects = await projectsApi.fetchProjects(token!);
+      setProjects(updatedProjects);
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to assign member to project');
     }
   };
 
@@ -235,6 +251,15 @@ export const TeamsPage = () => {
                         </button>
                       ))}
                       <div className="border-t border-cream-200 dark:border-neutral-800">
+                        <button
+                          onClick={() => {
+                            setAssigningMemberId(member.user._id);
+                            setShowProjectAssign(true);
+                            setOpenMenu(null);
+                          }}
+                          className="w-full text-left px-3 py-2 text-sm text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/30 transition-colors">
+                          Assign to project
+                        </button>
                         <button onClick={() => handleRemove(member.user._id)}
                           className="w-full text-left px-3 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors">
                           Remove member
@@ -490,6 +515,66 @@ export const TeamsPage = () => {
                   </button>
                 </div>
               )}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Project Assignment Modal */}
+      {showProjectAssign && assigningMemberId && (() => {
+        const member = data?.team.members.find(m => m.user._id === assigningMemberId);
+        if (!member) return null;
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/25 backdrop-blur-sm" onClick={() => setShowProjectAssign(false)}>
+            <div className="bg-cream-100 dark:bg-neutral-900 rounded-2xl shadow-xl border border-cream-300 dark:border-neutral-700 w-full max-w-md" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between px-6 py-4 border-b border-cream-200 dark:border-neutral-800">
+                <div>
+                  <h2 className="text-base font-bold text-neutral-800 dark:text-cream-100">Assign to Project</h2>
+                  <p className="text-xs text-neutral-400 mt-0.5">{member.user.name}</p>
+                </div>
+                <button onClick={() => setShowProjectAssign(false)}
+                  className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-400 hover:bg-cream-200 dark:hover:bg-neutral-800 transition-colors">
+                  <X size={15} />
+                </button>
+              </div>
+
+              <div className="p-6">
+                {projects.length === 0 ? (
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400 text-center py-8">No projects available</p>
+                ) : (
+                  <div className="space-y-2">
+                    {projects.map(p => {
+                      const isMember = p.members.some(m => m._id === assigningMemberId);
+                      return (
+                        <button
+                          key={p._id}
+                          onClick={() => !isMember && handleAssignToProject(p._id)}
+                          disabled={isMember}
+                          className={`w-full text-left px-4 py-3 rounded-xl border transition-all ${
+                            isMember
+                              ? 'bg-cream-200 dark:bg-neutral-800 border-cream-300 dark:border-neutral-700 opacity-60 cursor-not-allowed'
+                              : 'bg-cream-200 dark:bg-neutral-800 border-cream-300 dark:border-neutral-700 hover:border-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/20'
+                          }`}>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-semibold text-neutral-800 dark:text-cream-100">{p.name}</p>
+                              <p className="text-xs text-neutral-400 mt-0.5 capitalize">
+                                {p.members.length} {p.members.length === 1 ? 'member' : 'members'} · {p.status}
+                              </p>
+                            </div>
+                            {isMember && (
+                              <span className="text-xs bg-sage-100 dark:bg-sage-900/30 text-sage-600 dark:text-sage-400 px-2 py-1 rounded-full font-medium">
+                                Already member
+                              </span>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         );
