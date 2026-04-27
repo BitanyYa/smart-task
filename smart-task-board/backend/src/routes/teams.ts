@@ -13,7 +13,9 @@ router.get('/my', protect, async (req: AuthRequest, res: Response) => {
   try {
     let team = await Team.findOne({
       $or: [{ owner: req.userId }, { 'members.user': req.userId }]
-    }).populate('members.user', 'name email avatar isVerified');
+    })
+      .populate('members.user', 'name email avatar isVerified')
+      .populate('invites.projectId', 'name');
 
     if (!team) {
       const user = await User.findById(req.userId);
@@ -38,7 +40,24 @@ router.get('/my', protect, async (req: AuthRequest, res: Response) => {
       dueDate: { $lt: new Date() }, status: { $ne: 'done' }
     });
 
-    res.json({ team, taskStats, totalTasks, overdueTasks });
+    // Calculate average task completion time (in hours)
+    const completedTasks = await Task.find({
+      owner: { $in: memberIds },
+      deletedAt: null,
+      status: 'done',
+      createdAt: { $exists: true },
+      updatedAt: { $exists: true }
+    }).select('createdAt updatedAt').limit(100); // Sample last 100 completed tasks
+
+    let avgCompletionTime = 0;
+    if (completedTasks.length > 0) {
+      const totalMs = completedTasks.reduce((sum, t) => {
+        return sum + (new Date(t.updatedAt).getTime() - new Date(t.createdAt).getTime());
+      }, 0);
+      avgCompletionTime = Math.round(totalMs / completedTasks.length / (1000 * 60 * 60)); // Convert to hours
+    }
+
+    res.json({ team, taskStats, totalTasks, overdueTasks, avgCompletionTime });
   } catch (err: any) {
     res.status(500).json({ message: err.message });
   }
@@ -64,7 +83,7 @@ router.patch('/my', protect, async (req: AuthRequest, res: Response) => {
 // ── POST /api/teams/my/invite ──────────────────────────────
 router.post('/my/invite', protect, async (req: AuthRequest, res: Response) => {
   try {
-    const { email, role = 'member' } = req.body;
+    const { email, role = 'member', projectId } = req.body;
     if (!email) return res.status(400).json({ message: 'Email required' });
 
     const team = await Team.findOne({
@@ -99,6 +118,14 @@ router.post('/my/invite', protect, async (req: AuthRequest, res: Response) => {
         },
       });
 
+      // Add to project if specified
+      if (projectId) {
+        const { Project } = await import('../models/Project');
+        await Project.findByIdAndUpdate(projectId, {
+          $addToSet: { members: invitedUser._id }
+        });
+      }
+
       return res.json({ message: `${invitedUser.name} added to the team`, team });
     }
 
@@ -108,7 +135,13 @@ router.post('/my/invite', protect, async (req: AuthRequest, res: Response) => {
 
     // Remove any existing invite for this email
     team.invites = team.invites.filter((i: any) => i.email !== email.toLowerCase()) as any;
-    team.invites.push({ email: email.toLowerCase(), role, token, createdAt: new Date() });
+    team.invites.push({ 
+      email: email.toLowerCase(), 
+      role, 
+      token, 
+      projectId: projectId || undefined,
+      createdAt: new Date() 
+    });
     await team.save();
 
     const inviter = await User.findById(req.userId);
@@ -168,6 +201,14 @@ router.post('/accept-invite', protect, async (req: AuthRequest, res: Response) =
     const alreadyMember = team.members.some((m: any) => String(m.user) === String(req.userId));
     if (!alreadyMember) {
       team.members.push({ user: req.userId as any, role: invite.role, joinedAt: new Date() });
+    }
+
+    // Add to project if specified in invite
+    if (invite.projectId) {
+      const { Project } = await import('../models/Project');
+      await Project.findByIdAndUpdate(invite.projectId, {
+        $addToSet: { members: req.userId }
+      });
     }
 
     // Remove used invite

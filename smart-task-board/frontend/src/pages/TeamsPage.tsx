@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { Users, CheckSquare, Clock, AlertTriangle, Plus, MoreVertical, UserPlus, Loader2, X, Search } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import * as teamsApi from '../api/teams';
+import * as projectsApi from '../api/projects';
 import type { TeamData, TeamRole } from '../api/teams';
+import type { Project } from '../api/projects';
 
 const roleColors: Record<TeamRole, string> = {
   admin:  'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400',
@@ -33,6 +35,11 @@ export const TeamsPage = () => {
   const [inviteError, setInviteError] = useState('');
   const [inviteSuccess, setInviteSuccess] = useState('');
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [selectedMember, setSelectedMember] = useState<typeof data.team.members[0] | null>(null);
+  const [editingTeamName, setEditingTeamName] = useState(false);
+  const [teamName, setTeamName] = useState('');
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
 
   const isOwner = data?.team.owner === user?._id ||
     data?.team.members.find(m => m.user._id === user?._id)?.role === 'admin';
@@ -40,8 +47,16 @@ export const TeamsPage = () => {
   useEffect(() => {
     if (!token) return;
     teamsApi.getMyTeam(token)
-      .then(setData)
+      .then(d => {
+        setData(d);
+        setTeamName(d.team.name);
+      })
       .finally(() => setLoading(false));
+    
+    // Fetch projects for invite dropdown
+    projectsApi.fetchProjects(token)
+      .then(setProjects)
+      .catch(() => {});
   }, [token]);
 
   const handleInvite = async (e: React.FormEvent) => {
@@ -50,9 +65,10 @@ export const TeamsPage = () => {
     setInviteSuccess('');
     setInviteLoading(true);
     try {
-      const result = await teamsApi.inviteMember(token!, inviteEmail, inviteRole);
+      const result = await teamsApi.inviteMember(token!, inviteEmail, inviteRole, selectedProjectId || undefined);
       setInviteSuccess(result.message);
       setInviteEmail('');
+      setSelectedProjectId('');
       // Refresh
       const updated = await teamsApi.getMyTeam(token!);
       setData(updated);
@@ -78,6 +94,22 @@ export const TeamsPage = () => {
     setOpenMenu(null);
   };
 
+  const handleTeamNameSave = async () => {
+    if (!teamName.trim() || teamName === data?.team.name) {
+      setEditingTeamName(false);
+      return;
+    }
+    try {
+      await teamsApi.renameTeam(token!, teamName.trim());
+      const updated = await teamsApi.getMyTeam(token!);
+      setData(updated);
+      setEditingTeamName(false);
+    } catch {
+      setTeamName(data?.team.name || '');
+      setEditingTeamName(false);
+    }
+  };
+
   const getStats = (userId: string) =>
     data?.taskStats.find(s => s.userId === userId) || { active: 0, completed: 0 };
 
@@ -97,7 +129,34 @@ export const TeamsPage = () => {
       {/* Header */}
       <div className="flex items-start justify-between mb-7">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-800 dark:text-cream-100 tracking-tight">Team Management</h1>
+          <div className="flex items-center gap-2 mb-1">
+            {editingTeamName ? (
+              <input
+                type="text"
+                value={teamName}
+                onChange={e => setTeamName(e.target.value)}
+                onBlur={handleTeamNameSave}
+                onKeyDown={e => e.key === 'Enter' && handleTeamNameSave()}
+                autoFocus
+                className="text-2xl font-bold text-neutral-800 dark:text-cream-100 tracking-tight bg-cream-200 dark:bg-neutral-800 border border-primary-400 rounded-lg px-2 py-1 outline-none focus:ring-2 focus:ring-primary-400/40"
+              />
+            ) : (
+              <>
+                <h1 className="text-2xl font-bold text-neutral-800 dark:text-cream-100 tracking-tight">{data?.team.name}</h1>
+                {isOwner && (
+                  <button
+                    onClick={() => setEditingTeamName(true)}
+                    className="w-6 h-6 flex items-center justify-center rounded-lg text-neutral-400 hover:text-neutral-600 hover:bg-cream-200 dark:hover:bg-neutral-800 transition-colors"
+                    title="Edit team name">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                  </button>
+                )}
+              </>
+            )}
+          </div>
           <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
             Manage your collaborators, roles, and monitor workload distribution.
           </p>
@@ -118,7 +177,7 @@ export const TeamsPage = () => {
         {[
           { icon: Users,         label: 'Total Members', value: data?.team.members.length || 0,  color: 'bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400' },
           { icon: CheckSquare,   label: 'Active Tasks',  value: data?.totalTasks || 0,            color: 'bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400' },
-          { icon: Clock,         label: 'Avg. Task Time', value: '—',                             color: 'bg-primary-50 dark:bg-primary-950/40 text-orange-500 dark:text-orange-400' },
+          { icon: Clock,         label: 'Avg. Task Time', value: data?.avgCompletionTime ? `${data.avgCompletionTime}h` : '—', color: 'bg-primary-50 dark:bg-primary-950/40 text-orange-500 dark:text-orange-400' },
           { icon: AlertTriangle, label: 'Overdue',       value: data?.overdueTasks || 0,          color: 'bg-red-50 dark:bg-red-950/40 text-red-500 dark:text-red-400' },
         ].map(s => (
           <div key={s.label} className="bg-cream-100 dark:bg-neutral-900 rounded-xl border border-cream-300 dark:border-neutral-800 p-4 shadow-sm flex items-center gap-3">
@@ -213,7 +272,9 @@ export const TeamsPage = () => {
                 </div>
               </div>
 
-              <button className="text-sm font-semibold text-primary-600 dark:text-primary-400 hover:underline">
+              <button
+                onClick={() => setSelectedMember(member)}
+                className="text-sm font-semibold text-primary-600 dark:text-primary-400 hover:underline">
                 View Profile
               </button>
             </div>
@@ -244,7 +305,10 @@ export const TeamsPage = () => {
               <div key={inv.token} className="flex items-center justify-between px-5 py-3.5 border-b border-cream-200 dark:border-neutral-800 last:border-0">
                 <div>
                   <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{inv.email}</p>
-                  <p className="text-xs text-neutral-400 capitalize mt-0.5">Invited as {inv.role}</p>
+                  <p className="text-xs text-neutral-400 capitalize mt-0.5">
+                    Invited as {inv.role}
+                    {inv.projectId && <span className="text-primary-500"> · Project: {inv.projectId.name}</span>}
+                  </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs bg-cream-200 dark:bg-neutral-800 text-neutral-500 px-2 py-0.5 rounded-full">Pending</span>
@@ -272,7 +336,10 @@ export const TeamsPage = () => {
             <div className="flex items-center justify-between mb-5">
               <div>
                 <h2 className="text-base font-bold text-neutral-800 dark:text-cream-100">Invite Team Member</h2>
-                <p className="text-xs text-neutral-400 mt-0.5">They'll be added instantly if they have an account</p>
+                <p className="text-xs text-neutral-400 mt-0.5">
+                  They'll be added instantly if they have an account
+                  {projects.length > 0 && ` · ${projects.length} ${projects.length === 1 ? 'project' : 'projects'} available`}
+                </p>
               </div>
               <button onClick={() => setShowInvite(false)} className="w-7 h-7 flex items-center justify-center rounded-lg text-neutral-400 hover:bg-cream-200 dark:hover:bg-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-800 transition-colors">
                 <X size={15} />
@@ -300,6 +367,28 @@ export const TeamsPage = () => {
                   <option value="guest">Guest — view only</option>
                 </select>
               </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
+                  Assign to Project <span className="text-neutral-400">(optional)</span>
+                </label>
+                <select value={selectedProjectId} onChange={e => setSelectedProjectId(e.target.value)}
+                  className="w-full bg-cream-200 dark:bg-neutral-800 border border-cream-300 dark:border-neutral-700 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-primary-400/40 transition-all text-neutral-800 dark:text-cream-100">
+                  <option value="">No project assignment</option>
+                  {projects.length === 0 && (
+                    <option disabled>No projects available</option>
+                  )}
+                  {projects.map(p => (
+                    <option key={p._id} value={p._id}>
+                      {p.name} ({p.members.length} {p.members.length === 1 ? 'member' : 'members'}) · {p.status}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-neutral-400">
+                  {selectedProjectId 
+                    ? 'Member will be added to this project automatically' 
+                    : 'Member will only join the team workspace'}
+                </p>
+              </div>
               <div className="flex justify-end gap-2 pt-1">
                 <button type="button" onClick={() => setShowInvite(false)}
                   className="px-4 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:bg-cream-200 dark:hover:bg-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-800 rounded-xl transition-colors">
@@ -315,6 +404,96 @@ export const TeamsPage = () => {
           </div>
         </div>
       )}
+
+      {/* Member Profile Modal */}
+      {selectedMember && (() => {
+        const stats = getStats(selectedMember.user._id);
+        const color = getAvatarColor(selectedMember.user.name);
+        const joinedDate = new Date(selectedMember.joinedAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/25 backdrop-blur-sm" onClick={() => setSelectedMember(null)}>
+            <div className="bg-cream-100 dark:bg-neutral-900 rounded-2xl shadow-xl border border-cream-300 dark:border-neutral-700 w-full max-w-lg" onClick={e => e.stopPropagation()}>
+              {/* Header */}
+              <div className="relative px-6 pt-6 pb-4 border-b border-cream-200 dark:border-neutral-800">
+                <button onClick={() => setSelectedMember(null)}
+                  className="absolute top-4 right-4 w-7 h-7 flex items-center justify-center rounded-lg text-neutral-400 hover:bg-cream-200 dark:hover:bg-neutral-800 transition-colors">
+                  <X size={15} />
+                </button>
+                <div className="flex items-center gap-4">
+                  <div className={`w-16 h-16 rounded-full ${color} flex items-center justify-center text-white text-2xl font-bold shadow-md`}>
+                    {selectedMember.user.name[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-neutral-800 dark:text-cream-100">{selectedMember.user.name}</h2>
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400">{selectedMember.user.email}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Body */}
+              <div className="p-6 space-y-5">
+                {/* Role */}
+                <div>
+                  <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-2">Role</p>
+                  <span className={`inline-block text-sm font-semibold px-3 py-1 rounded-full capitalize ${roleColors[selectedMember.role]}`}>
+                    {selectedMember.role}
+                  </span>
+                </div>
+
+                {/* Stats */}
+                <div>
+                  <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-3">Task Statistics</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-cream-200 dark:bg-neutral-800 rounded-xl p-4">
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">Active Tasks</p>
+                      <p className="text-2xl font-bold text-neutral-800 dark:text-cream-100">{stats.active}</p>
+                    </div>
+                    <div className="bg-cream-200 dark:bg-neutral-800 rounded-xl p-4">
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">Completed</p>
+                      <p className="text-2xl font-bold text-neutral-800 dark:text-cream-100">{stats.completed}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Member since */}
+                <div>
+                  <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-2">Member Since</p>
+                  <p className="text-sm text-neutral-700 dark:text-neutral-300">{joinedDate}</p>
+                </div>
+
+                {/* Verification status */}
+                {selectedMember.user.isVerified !== undefined && (
+                  <div>
+                    <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-2">Account Status</p>
+                    <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${
+                      selectedMember.user.isVerified
+                        ? 'bg-sage-100 text-sage-700 dark:bg-sage-900/30 dark:text-sage-400'
+                        : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                    }`}>
+                      {selectedMember.user.isVerified ? '✓ Verified' : '⚠ Unverified'}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer actions */}
+              {isOwner && selectedMember.user._id !== user?._id && (
+                <div className="px-6 py-4 border-t border-cream-200 dark:border-neutral-800 flex justify-end gap-2">
+                  <button
+                    onClick={() => {
+                      setSelectedMember(null);
+                      setOpenMenu(selectedMember.user._id);
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:bg-cream-200 dark:hover:bg-neutral-800 rounded-xl transition-colors">
+                    Manage Member
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 };

@@ -12,7 +12,7 @@ export interface ITeam extends Document {
   name: string;
   owner: Types.ObjectId;
   members: ITeamMember[];
-  invites: { email: string; role: TeamRole; token: string; createdAt: Date }[];
+  invites: { email: string; role: TeamRole; token: string; projectId?: Types.ObjectId; createdAt: Date }[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -29,6 +29,7 @@ const TeamSchema = new Schema<ITeam>({
     email:     { type: String },
     role:      { type: String, enum: ['admin', 'member', 'guest'], default: 'member' },
     token:     { type: String },
+    projectId: { type: Schema.Types.ObjectId, ref: 'Project' },
     createdAt: { type: Date, default: Date.now },
   }],
 }, { timestamps: true });
