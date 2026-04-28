@@ -329,4 +329,21 @@ router.patch('/preferences', protect, async (req: AuthRequest, res: Response) =>
   }
 });
 
+// ── PATCH /api/auth/notification-preferences ───────────────
+router.patch('/notification-preferences', protect, async (req: AuthRequest, res: Response) => {
+  try {
+    const { notificationPreferences } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.userId,
+      { notificationPreferences },
+      { new: true }
+    ).select('-password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user);
+  } catch (err: any) {
+    console.error('Notification preferences update error:', err);
+    res.status(500).json({ message: err.message || 'Failed to update notification preferences' });
+  }
+});
+
 export default router;

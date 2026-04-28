@@ -19,6 +19,14 @@ export interface IUser extends Document {
   language?: string;
   region?: string;
   timezone?: string;
+  notificationPreferences?: {
+    email: boolean;
+    push: boolean;
+    taskUpdates: boolean;
+    mentions: boolean;
+    weeklyDigest: boolean;
+    marketing: boolean;
+  };
   isVerified: boolean;
   verificationToken?: string | null;
   verificationExpires?: Date | null;
@@ -46,6 +54,24 @@ const UserSchema = new Schema<IUser>({
   language:               { type: String, default: 'English (United States)' },
   region:                 { type: String, default: 'North America' },
   timezone:               { type: String, default: '(GMT-05:00) Eastern Time' },
+  notificationPreferences: {
+    type: {
+      email:        { type: Boolean, default: true },
+      push:         { type: Boolean, default: true },
+      taskUpdates:  { type: Boolean, default: true },
+      mentions:     { type: Boolean, default: true },
+      weeklyDigest: { type: Boolean, default: false },
+      marketing:    { type: Boolean, default: false },
+    },
+    default: {
+      email: true,
+      push: true,
+      taskUpdates: true,
+      mentions: true,
+      weeklyDigest: false,
+      marketing: false,
+    },
+  },
   isVerified:             { type: Boolean, default: false },
   verificationToken:      { type: String, default: null },
   verificationExpires:    { type: Date, default: null },

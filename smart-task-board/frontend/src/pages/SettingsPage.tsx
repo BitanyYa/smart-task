@@ -58,8 +58,12 @@ export const SettingsPage = () => {
 
   // Notifications state
   const [notifs, setNotifs] = useState({
-    email: true, push: true, taskUpdates: true,
-    mentions: true, weeklyDigest: false, marketing: false,
+    email: (user as any)?.notificationPreferences?.email ?? true,
+    push: (user as any)?.notificationPreferences?.push ?? true,
+    taskUpdates: (user as any)?.notificationPreferences?.taskUpdates ?? true,
+    mentions: (user as any)?.notificationPreferences?.mentions ?? true,
+    weeklyDigest: (user as any)?.notificationPreferences?.weeklyDigest ?? false,
+    marketing: (user as any)?.notificationPreferences?.marketing ?? false,
   });
 
   const handleProfileSave = async (e: FormEvent) => {
@@ -186,6 +190,23 @@ export const SettingsPage = () => {
       alert(err.response?.data?.message || 'Failed to update preferences');
     } finally {
       setPrefsLoading(false);
+    }
+  };
+
+  const handleNotificationToggle = async (key: keyof typeof notifs) => {
+    const newNotifs = { ...notifs, [key]: !notifs[key] };
+    setNotifs(newNotifs);
+    
+    try {
+      const response = await axios.patch(`${import.meta.env.VITE_API_URL}/auth/notification-preferences`,
+        { notificationPreferences: newNotifs },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      updateUser(response.data);
+    } catch (err: any) {
+      // Revert on error
+      setNotifs(notifs);
+      alert(err.response?.data?.message || 'Failed to update notification preferences');
     }
   };
 
@@ -482,7 +503,7 @@ export const SettingsPage = () => {
                   </div>
                   <Toggle
                     checked={notifs[item.key as keyof typeof notifs]}
-                    onChange={() => setNotifs(p => ({ ...p, [item.key]: !p[item.key as keyof typeof notifs] }))}
+                    onChange={() => handleNotificationToggle(item.key as keyof typeof notifs)}
                   />
                 </div>
               ))}
