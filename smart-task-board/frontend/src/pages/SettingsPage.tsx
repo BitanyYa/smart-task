@@ -21,15 +21,15 @@ const inputCls = "w-full bg-cream-100 dark:bg-neutral-800 border border-cream-30
 const labelCls = "text-[11px] font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-widest mb-1.5 block";
 
 export const SettingsPage = () => {
-  const { user, token } = useAuth();
+  const { user, token, updateUser } = useAuth();
   const { theme, toggle } = useTheme();
   const [activeTab, setActiveTab] = useState<Tab>('profile');
 
   // Profile state
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
-  const [role, setRole] = useState('Product Designer');
-  const [bio, setBio] = useState('');
+  const [role, setRole] = useState((user as any)?.role || 'Product Designer');
+  const [bio, setBio] = useState((user as any)?.bio || '');
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
   const [profileError, setProfileError] = useState('');
@@ -42,10 +42,19 @@ export const SettingsPage = () => {
   const [passSaved, setPassSaved] = useState(false);
   const [passError, setPassError] = useState('');
 
+  // Export state
+  const [exportLoading, setExportLoading] = useState(false);
+  
+  // Avatar state
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarError, setAvatarError] = useState('');
+
   // Account state
-  const [language, setLanguage] = useState('English (United States)');
-  const [region, setRegion] = useState('North America');
-  const [timezone, setTimezone] = useState('(GMT-05:00) Eastern Time');
+  const [language, setLanguage] = useState((user as any)?.language || 'English (United States)');
+  const [region, setRegion] = useState((user as any)?.region || 'North America');
+  const [timezone, setTimezone] = useState((user as any)?.timezone || '(GMT-05:00) Eastern Time');
+  const [prefsLoading, setPrefsLoading] = useState(false);
+  const [prefsSaved, setPrefsSaved] = useState(false);
 
   // Notifications state
   const [notifs, setNotifs] = useState({
@@ -58,10 +67,12 @@ export const SettingsPage = () => {
     setProfileError('');
     setProfileLoading(true);
     try {
-      await axios.patch(`${import.meta.env.VITE_API_URL}/auth/profile`,
-        { name, email },
+      const response = await axios.patch(`${import.meta.env.VITE_API_URL}/auth/profile`,
+        { name, email, role, bio },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      // Update context with new user data
+      updateUser(response.data);
       setProfileSaved(true);
       setTimeout(() => setProfileSaved(false), 2000);
     } catch (err: any) {
@@ -88,6 +99,93 @@ export const SettingsPage = () => {
       setPassError(err.response?.data?.message || 'Failed to update password');
     } finally {
       setPassLoading(false);
+    }
+  };
+
+  const handleExportData = async () => {
+    setExportLoading(true);
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/auth/export-data`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      // Create downloadable JSON file
+      const dataStr = JSON.stringify(response.data, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `smarttask-export-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to export data');
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setAvatarError('Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      setAvatarError('Image too large (max 2MB)');
+      return;
+    }
+
+    setAvatarError('');
+    setAvatarUploading(true);
+
+    try {
+      // Convert to base64
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = reader.result as string;
+        
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/avatar`,
+          { avatar: base64 },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        // Update context with new user data
+        updateUser(response.data);
+        setAvatarUploading(false);
+      };
+      reader.onerror = () => {
+        setAvatarError('Failed to read image');
+        setAvatarUploading(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (err: any) {
+      setAvatarError(err.response?.data?.message || 'Failed to upload avatar');
+      setAvatarUploading(false);
+    }
+  };
+
+  const handlePreferencesSave = async () => {
+    setPrefsLoading(true);
+    try {
+      const response = await axios.patch(`${import.meta.env.VITE_API_URL}/auth/preferences`,
+        { language, region, timezone },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      updateUser(response.data);
+      setPrefsSaved(true);
+      setTimeout(() => setPrefsSaved(false), 2000);
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to update preferences');
+    } finally {
+      setPrefsLoading(false);
     }
   };
 
@@ -143,13 +241,36 @@ export const SettingsPage = () => {
                 {/* Avatar */}
                 <div className="shrink-0">
                   <div className="relative">
-                    <div className="w-20 h-20 rounded-full bg-teal-500 flex items-center justify-center text-white text-3xl font-bold shadow-md">
-                      {user?.name?.[0]?.toUpperCase()}
-                    </div>
-                    <button type="button" className="absolute bottom-0 right-0 w-7 h-7 bg-primary-500 rounded-full flex items-center justify-center shadow-md hover:bg-primary-600 transition-colors">
+                    {avatarUploading ? (
+                      <div className="w-20 h-20 rounded-full bg-cream-200 dark:bg-neutral-800 flex items-center justify-center">
+                        <Loader2 size={24} className="text-primary-500 animate-spin" />
+                      </div>
+                    ) : (user as any)?.avatar ? (
+                      <img 
+                        src={(user as any).avatar} 
+                        alt={user?.name}
+                        className="w-20 h-20 rounded-full object-cover shadow-md"
+                      />
+                    ) : (
+                      <div className="w-20 h-20 rounded-full bg-teal-500 flex items-center justify-center text-white text-3xl font-bold shadow-md">
+                        {user?.name?.[0]?.toUpperCase()}
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      id="avatar-upload"
+                      accept="image/*"
+                      onChange={handleAvatarUpload}
+                      className="hidden"
+                      disabled={avatarUploading}
+                    />
+                    <label
+                      htmlFor="avatar-upload"
+                      className="absolute bottom-0 right-0 w-7 h-7 bg-primary-500 rounded-full flex items-center justify-center shadow-md hover:bg-primary-600 transition-colors cursor-pointer">
                       <Pencil size={12} className="text-white" />
-                    </button>
+                    </label>
                   </div>
+                  {avatarError && <p className="text-xs text-red-500 mt-2">{avatarError}</p>}
                 </div>
 
                 {/* Fields */}
@@ -162,7 +283,21 @@ export const SettingsPage = () => {
                   <div>
                     <label className={labelCls}>Professional Role</label>
                     <select value={role} onChange={e => setRole(e.target.value)} className={inputCls}>
-                      {['Product Designer', 'Software Engineer', 'Project Manager', 'Data Analyst', 'DevOps Engineer', 'Other'].map(r => (
+                      {[
+                        'Frontend Developer',
+                        'Backend Developer', 
+                        'Full-Stack Developer',
+                        'Mobile Developer',
+                        'UI/UX Designer',
+                        'QA (Quality Assurance) Engineer',
+                        'Database Administrator (DBA)',
+                        'Product Designer',
+                        'Software Engineer',
+                        'Project Manager',
+                        'Data Analyst',
+                        'DevOps Engineer',
+                        'Other'
+                      ].map(r => (
                         <option key={r}>{r}</option>
                       ))}
                     </select>
@@ -192,14 +327,21 @@ export const SettingsPage = () => {
                   <p className="text-xs text-neutral-400">Download a copy of your task history and account data.</p>
                 </div>
               </div>
-              <button type="button" className="flex items-center gap-1.5 text-sm font-medium text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-800 px-3 py-1.5 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-950/30 transition-colors">
-                <Download size={13} /> Export Data
+              <button type="button" onClick={handleExportData} disabled={exportLoading}
+                className="flex items-center gap-1.5 text-sm font-medium text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-800 px-3 py-1.5 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-950/30 transition-colors disabled:opacity-60">
+                {exportLoading ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />}
+                {exportLoading ? 'Exporting...' : 'Export Data'}
               </button>
             </div>
 
             {/* Footer */}
             <div className="flex justify-end gap-3">
-              <button type="button" onClick={() => { setName(user?.name || ''); setEmail(user?.email || ''); }}
+              <button type="button" onClick={() => { 
+                setName(user?.name || ''); 
+                setEmail(user?.email || ''); 
+                setRole((user as any)?.role || 'Product Designer');
+                setBio((user as any)?.bio || '');
+              }}
                 className="px-5 py-2.5 text-sm font-semibold text-neutral-600 dark:text-neutral-400 border border-cream-300 dark:border-neutral-700 rounded-xl hover:bg-cream-200 dark:hover:bg-neutral-800 dark:bg-neutral-800 dark:hover:bg-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-800 transition-colors">
                 Cancel
               </button>
@@ -261,6 +403,13 @@ export const SettingsPage = () => {
                     ))}
                   </div>
                 </div>
+              </div>
+              <div className="flex justify-end mt-5">
+                <button onClick={handlePreferencesSave} disabled={prefsLoading}
+                  className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-primary-500 hover:bg-primary-600 disabled:opacity-60 rounded-xl transition-colors shadow-sm">
+                  {prefsLoading ? <Loader2 size={14} className="animate-spin" /> : prefsSaved ? <Check size={14} /> : null}
+                  {prefsSaved ? 'Saved!' : 'Save Preferences'}
+                </button>
               </div>
             </div>
 

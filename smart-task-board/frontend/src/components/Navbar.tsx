@@ -75,9 +75,13 @@ export const Navbar = ({ search, onSearch, tasks, onNavigate }: Props) => {
 
         <div className="relative ml-1">
           <button onClick={() => { setShowProfile(p => !p); setShowNotifications(false); }}
-            className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center text-white text-xs font-bold cursor-pointer hover:ring-2 hover:ring-primary-300 transition-all"
+            className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center text-white text-xs font-bold cursor-pointer hover:ring-2 hover:ring-primary-300 transition-all overflow-hidden"
             title={user?.name}>
-            {user?.name?.[0]?.toUpperCase() || 'U'}
+            {(user as any)?.avatar ? (
+              <img src={(user as any).avatar} alt={user?.name} className="w-full h-full object-cover" />
+            ) : (
+              user?.name?.[0]?.toUpperCase() || 'U'
+            )}
           </button>
           {showProfile && <ProfileDropdown onNavigate={onNavigate} onClose={() => setShowProfile(false)} />}
         </div>

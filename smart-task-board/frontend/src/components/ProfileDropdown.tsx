@@ -33,8 +33,12 @@ export const ProfileDropdown = ({ onNavigate, onClose }: Props) => {
       {/* User info */}
       <div className="px-4 py-3 border-b border-cream-200 dark:border-neutral-800">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-teal-500 flex items-center justify-center text-white font-bold text-sm shrink-0">
-            {user?.name?.[0]?.toUpperCase()}
+          <div className="w-9 h-9 rounded-full bg-teal-500 flex items-center justify-center text-white font-bold text-sm shrink-0 overflow-hidden">
+            {(user as any)?.avatar ? (
+              <img src={(user as any).avatar} alt={user?.name} className="w-full h-full object-cover" />
+            ) : (
+              user?.name?.[0]?.toUpperCase()
+            )}
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-neutral-800 dark:text-cream-100 truncate">{user?.name}</p>

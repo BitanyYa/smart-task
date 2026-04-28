@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { User } from '../models/User';
 import { RefreshToken } from '../models/RefreshToken';
 import { sendVerificationEmail, sendPasswordResetEmail } from '../config/mailer';
+import { protect, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
@@ -220,37 +221,111 @@ router.get('/me', async (req: Request, res: Response) => {
 });
 
 // ── PATCH /api/auth/profile ────────────────────────────────
-router.patch('/profile', async (req: Request, res: Response) => {
-  const header = req.headers.authorization;
-  if (!header?.startsWith('Bearer ')) return res.status(401).json({ message: 'Not authorized' });
+router.patch('/profile', protect, async (req: AuthRequest, res: Response) => {
   try {
-    const decoded = jwt.verify(header.split(' ')[1], process.env.JWT_SECRET!) as { id: string };
-    const { name, email } = req.body;
-    const user = await User.findByIdAndUpdate(decoded.id, { name, email }, { new: true }).select('-password');
+    const { name, email, role, bio } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.userId, 
+      { name, email, role, bio }, 
+      { new: true }
+    ).select('-password');
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.json(user);
-  } catch {
-    res.status(401).json({ message: 'Invalid token' });
+  } catch (err: any) {
+    console.error('Profile update error:', err);
+    res.status(500).json({ message: err.message || 'Failed to update profile' });
   }
 });
 
 // ── PATCH /api/auth/password ───────────────────────────────
-router.patch('/password', async (req: Request, res: Response) => {
-  const header = req.headers.authorization;
-  if (!header?.startsWith('Bearer ')) return res.status(401).json({ message: 'Not authorized' });
+router.patch('/password', protect, async (req: AuthRequest, res: Response) => {
   try {
-    const decoded = jwt.verify(header.split(' ')[1], process.env.JWT_SECRET!) as { id: string };
     const { currentPassword, newPassword } = req.body;
-    const user = await User.findById(decoded.id);
+    const user = await User.findById(req.userId);
     if (!user) return res.status(404).json({ message: 'User not found' });
     const valid = await user.comparePassword(currentPassword);
     if (!valid) return res.status(400).json({ message: 'Current password is incorrect' });
     user.password = newPassword;
     await user.save();
-    await RefreshToken.deleteMany({ user: decoded.id });
+    await RefreshToken.deleteMany({ user: req.userId });
     res.json({ message: 'Password updated' });
-  } catch {
-    res.status(401).json({ message: 'Invalid token' });
+  } catch (err: any) {
+    console.error('Password update error:', err);
+    res.status(500).json({ message: err.message || 'Failed to update password' });
+  }
+});
+
+// ── GET /api/auth/export-data ──────────────────────────────
+router.get('/export-data', protect, async (req: AuthRequest, res: Response) => {
+  try {
+    const { Task } = await import('../models/Task');
+    const { Project } = await import('../models/Project');
+    const { Team } = await import('../models/Team');
+    
+    const user = await User.findById(req.userId).select('-password');
+    const tasks = await Task.find({ owner: req.userId, deletedAt: null });
+    const projects = await Project.find({ $or: [{ owner: req.userId }, { members: req.userId }] });
+    const teams = await Team.find({ $or: [{ owner: req.userId }, { 'members.user': req.userId }] });
+    
+    const exportData = {
+      user,
+      tasks,
+      projects,
+      teams,
+      exportedAt: new Date().toISOString(),
+    };
+    
+    res.json(exportData);
+  } catch (err: any) {
+    console.error('Export data error:', err);
+    res.status(500).json({ message: err.message || 'Failed to export data' });
+  }
+});
+
+// ── POST /api/auth/avatar ──────────────────────────────────
+router.post('/avatar', protect, async (req: AuthRequest, res: Response) => {
+  try {
+    const { avatar } = req.body;
+    
+    // Validate base64 image (max 2MB)
+    if (!avatar || !avatar.startsWith('data:image/')) {
+      return res.status(400).json({ message: 'Invalid image format' });
+    }
+    
+    // Check size (base64 is ~33% larger than binary)
+    const sizeInBytes = (avatar.length * 3) / 4;
+    if (sizeInBytes > 2 * 1024 * 1024) {
+      return res.status(400).json({ message: 'Image too large (max 2MB)' });
+    }
+    
+    const user = await User.findByIdAndUpdate(
+      req.userId,
+      { avatar },
+      { new: true }
+    ).select('-password');
+    
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user);
+  } catch (err: any) {
+    console.error('Avatar upload error:', err);
+    res.status(500).json({ message: err.message || 'Failed to upload avatar' });
+  }
+});
+
+// ── PATCH /api/auth/preferences ────────────────────────────
+router.patch('/preferences', protect, async (req: AuthRequest, res: Response) => {
+  try {
+    const { language, region, timezone } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.userId,
+      { language, region, timezone },
+      { new: true }
+    ).select('-password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user);
+  } catch (err: any) {
+    console.error('Preferences update error:', err);
+    res.status(500).json({ message: err.message || 'Failed to update preferences' });
   }
 });
 

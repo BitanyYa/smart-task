@@ -14,6 +14,11 @@ export interface IUser extends Document {
   email: string;
   password: string;
   avatar?: string;
+  role?: string;
+  bio?: string;
+  language?: string;
+  region?: string;
+  timezone?: string;
   isVerified: boolean;
   verificationToken?: string | null;
   verificationExpires?: Date | null;
@@ -36,6 +41,11 @@ const UserSchema = new Schema<IUser>({
   email:                  { type: String, required: true, unique: true, lowercase: true, trim: true },
   password:               { type: String, required: true, minlength: 6 },
   avatar:                 { type: String },
+  role:                   { type: String, trim: true },
+  bio:                    { type: String, trim: true },
+  language:               { type: String, default: 'English (United States)' },
+  region:                 { type: String, default: 'North America' },
+  timezone:               { type: String, default: '(GMT-05:00) Eastern Time' },
   isVerified:             { type: Boolean, default: false },
   verificationToken:      { type: String, default: null },
   verificationExpires:    { type: Date, default: null },

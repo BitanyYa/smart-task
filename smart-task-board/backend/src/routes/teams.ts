@@ -14,7 +14,7 @@ router.get('/my', protect, async (req: AuthRequest, res: Response) => {
     let team = await Team.findOne({
       $or: [{ owner: req.userId }, { 'members.user': req.userId }]
     })
-      .populate('members.user', 'name email avatar isVerified')
+      .populate('members.user', 'name email avatar role bio isVerified')
       .populate('invites.projectId', 'name');
 
     if (!team) {
@@ -24,7 +24,7 @@ router.get('/my', protect, async (req: AuthRequest, res: Response) => {
         owner: req.userId,
         members: [{ user: req.userId, role: 'admin' }],
       });
-      await team.populate('members.user', 'name email avatar isVerified');
+      await team.populate('members.user', 'name email avatar role bio isVerified');
     }
 
     const memberIds = team.members.map((m: any) => m.user._id || m.user);
@@ -72,7 +72,7 @@ router.patch('/my', protect, async (req: AuthRequest, res: Response) => {
       { owner: req.userId },
       { name: name.trim() },
       { new: true }
-    ).populate('members.user', 'name email avatar');
+    ).populate('members.user', 'name email avatar role bio');
     if (!team) return res.status(404).json({ message: 'Team not found' });
     res.json(team);
   } catch (err: any) {
@@ -100,7 +100,7 @@ router.post('/my/invite', protect, async (req: AuthRequest, res: Response) => {
       // Add directly if they have an account
       team.members.push({ user: invitedUser._id as any, role, joinedAt: new Date() });
       await team.save();
-      await team.populate('members.user', 'name email avatar');
+      await team.populate('members.user', 'name email avatar role bio');
 
       // Send notification email
       const inviter = await User.findById(req.userId);
@@ -214,7 +214,7 @@ router.post('/accept-invite', protect, async (req: AuthRequest, res: Response) =
     // Remove used invite
     team.invites = team.invites.filter((i: any) => i.token !== token) as any;
     await team.save();
-    await team.populate('members.user', 'name email avatar');
+    await team.populate('members.user', 'name email avatar role bio');
 
     // Notify the team owner
     await User.findByIdAndUpdate(team.owner, {
@@ -247,7 +247,7 @@ router.patch('/my/members/:userId/role', protect, async (req: AuthRequest, res: 
 
     member.role = req.body.role;
     await team.save();
-    await team.populate('members.user', 'name email avatar');
+    await team.populate('members.user', 'name email avatar role bio');
     res.json(team);
   } catch (err: any) {
     res.status(500).json({ message: err.message });

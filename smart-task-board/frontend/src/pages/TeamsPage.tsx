@@ -272,9 +272,17 @@ export const TeamsPage = () => {
 
               {/* Avatar */}
               <div className="relative mb-3">
-                <div className={`w-16 h-16 rounded-full ${color} flex items-center justify-center text-white text-2xl font-bold shadow-md`}>
-                  {member.user.name[0].toUpperCase()}
-                </div>
+                {(member.user as any).avatar ? (
+                  <img 
+                    src={(member.user as any).avatar} 
+                    alt={member.user.name}
+                    className="w-16 h-16 rounded-full object-cover shadow-md"
+                  />
+                ) : (
+                  <div className={`w-16 h-16 rounded-full ${color} flex items-center justify-center text-white text-2xl font-bold shadow-md`}>
+                    {member.user.name[0].toUpperCase()}
+                  </div>
+                )}
                 <span className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 bg-sage-400 border-2 border-cream-100 dark:border-neutral-900 rounded-full" />
               </div>
 
@@ -435,6 +443,7 @@ export const TeamsPage = () => {
         const stats = getStats(selectedMember.user._id);
         const color = getAvatarColor(selectedMember.user.name);
         const joinedDate = new Date(selectedMember.joinedAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        const memberUser = selectedMember.user as any;
 
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/25 backdrop-blur-sm" onClick={() => setSelectedMember(null)}>
@@ -446,21 +455,43 @@ export const TeamsPage = () => {
                   <X size={15} />
                 </button>
                 <div className="flex items-center gap-4">
-                  <div className={`w-16 h-16 rounded-full ${color} flex items-center justify-center text-white text-2xl font-bold shadow-md`}>
-                    {selectedMember.user.name[0].toUpperCase()}
+                  {/* Avatar */}
+                  <div className="relative">
+                    {memberUser.avatar ? (
+                      <img 
+                        src={memberUser.avatar} 
+                        alt={selectedMember.user.name}
+                        className="w-16 h-16 rounded-full object-cover shadow-md"
+                      />
+                    ) : (
+                      <div className={`w-16 h-16 rounded-full ${color} flex items-center justify-center text-white text-2xl font-bold shadow-md`}>
+                        {selectedMember.user.name[0].toUpperCase()}
+                      </div>
+                    )}
                   </div>
                   <div>
                     <h2 className="text-xl font-bold text-neutral-800 dark:text-cream-100">{selectedMember.user.name}</h2>
                     <p className="text-sm text-neutral-500 dark:text-neutral-400">{selectedMember.user.email}</p>
+                    {memberUser.role && (
+                      <p className="text-xs text-primary-600 dark:text-primary-400 mt-0.5 font-medium">{memberUser.role}</p>
+                    )}
                   </div>
                 </div>
               </div>
 
               {/* Body */}
               <div className="p-6 space-y-5">
-                {/* Role */}
+                {/* Bio */}
+                {memberUser.bio && (
+                  <div>
+                    <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-2">About</p>
+                    <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">{memberUser.bio}</p>
+                  </div>
+                )}
+
+                {/* Team Role */}
                 <div>
-                  <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-2">Role</p>
+                  <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-2">Team Role</p>
                   <span className={`inline-block text-sm font-semibold px-3 py-1 rounded-full capitalize ${roleColors[selectedMember.role]}`}>
                     {selectedMember.role}
                   </span>
