@@ -52,7 +52,7 @@ export const Sidebar = ({ activePage, onNavigate, trashedCount, onNewTask }: Pro
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-0.5">
+      <nav className="flex-1 overflow-y-auto scrollbar-hide px-3 py-3 flex flex-col gap-0.5">
         {navItems.map(item => {
           const active = activePage === item.id;
           return (

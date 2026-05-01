@@ -63,3 +63,6 @@ html[data-theme='dark'] { background-color: #181614; color: #f2ede8; }
 html[data-theme='dark'] ::-webkit-scrollbar { width: 6px; }
 html[data-theme='dark'] ::-webkit-scrollbar-track { background: #272422; }
 html[data-theme='dark'] ::-webkit-scrollbar-thumb { background: #4a4745; border-radius: 10px; }
+
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
