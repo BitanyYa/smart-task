@@ -36,26 +36,38 @@ router.post('/register', async (req: Request, res: Response) => {
     if (!parsed.success) return res.status(400).json({ message: parsed.error.issues[0].message });
 
     const { name, email, password } = parsed.data;
-    const exists = await User.findOne({ email });
-    if (exists) return res.status(400).json({ message: 'Email already in use' });
+    const normalizedEmail = email.toLowerCase().trim();
+    console.log(`[Register] Attempting: ${normalizedEmail}`);
+    
+    const exists = await User.findOne({ email: normalizedEmail });
+    if (exists) {
+      console.log(`[Register] Email already in use: ${normalizedEmail}`);
+      return res.status(400).json({ message: 'Email already in use' });
+    }
 
     const verificationToken   = uuidv4();
     const verificationExpires = new Date(Date.now() + VERIFY_EXPIRES_HOURS * 60 * 60 * 1000);
 
+    console.log(`[Register] Creating user document...`);
     const user = await User.create({
-      name, email, password,
+      name,
+      email: normalizedEmail,
+      password,
       verificationToken,
       verificationExpires,
       isVerified: false,
     });
+    console.log(`[Register] User created: ${user._id}`);
 
     // Send verification email (non-blocking)
-    sendVerificationEmail(email, name, verificationToken).catch(err =>
-      console.error('Email send failed:', err.message)
+    sendVerificationEmail(normalizedEmail, name, verificationToken).catch(err =>
+      console.error('[Register] Email send failed:', err.message)
     );
 
+    console.log(`[Register] Generating tokens...`);
     const accessToken  = signAccess(String(user._id));
     const refreshToken = await createRefreshToken(String(user._id));
+    console.log(`[Register] Success!`);
 
     res.status(201).json({
       token: accessToken,
@@ -64,8 +76,14 @@ router.post('/register', async (req: Request, res: Response) => {
       message: 'Account created. Please check your email to verify your account.',
     });
   } catch (err: any) {
-    console.error('Register error:', err);
-    res.status(500).json({ message: err.message || 'Server error' });
+    console.error('Register error details:', err);
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({ message: err.message });
+    }
+    if (err.code === 11000) {
+      return res.status(400).json({ message: 'Email already exists in database.' });
+    }
+    res.status(500).json({ message: err.message || 'Server error during registration' });
   }
 });
 
@@ -80,8 +98,15 @@ router.post('/login', async (req: Request, res: Response) => {
     if (!parsed.success) return res.status(400).json({ message: parsed.error.issues[0].message });
 
     const { email, password } = parsed.data;
-    const user = await User.findOne({ email });
-    if (!user || !(await user.comparePassword(password))) {
+    const normalizedEmail = email.toLowerCase().trim();
+    
+    const user = await User.findOne({ email: normalizedEmail });
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
@@ -241,14 +266,25 @@ router.patch('/profile', protect, async (req: AuthRequest, res: Response) => {
 router.patch('/password', protect, async (req: AuthRequest, res: Response) => {
   try {
     const { currentPassword, newPassword } = req.body;
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ message: 'New password must be at least 6 characters' });
+    }
     const user = await User.findById(req.userId);
     if (!user) return res.status(404).json({ message: 'User not found' });
     const valid = await user.comparePassword(currentPassword);
     if (!valid) return res.status(400).json({ message: 'Current password is incorrect' });
+    
     user.password = newPassword;
     await user.save();
+    
+    // Delete old refresh tokens
     await RefreshToken.deleteMany({ user: req.userId });
-    res.json({ message: 'Password updated' });
+    
+    // Issue a fresh token pair so the user stays logged in
+    const accessToken  = signAccess(String(user._id));
+    const refreshToken = await createRefreshToken(String(user._id));
+    
+    res.json({ message: 'Password updated', token: accessToken, refreshToken });
   } catch (err: any) {
     console.error('Password update error:', err);
     res.status(500).json({ message: err.message || 'Failed to update password' });
@@ -343,6 +379,58 @@ router.patch('/notification-preferences', protect, async (req: AuthRequest, res:
   } catch (err: any) {
     console.error('Notification preferences update error:', err);
     res.status(500).json({ message: err.message || 'Failed to update notification preferences' });
+  }
+});
+
+// ── PATCH /api/auth/two-factor ──────────────────────────────
+router.patch('/two-factor', protect, async (req: AuthRequest, res: Response) => {
+  try {
+    const { enabled } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.userId,
+      { twoFactorEnabled: enabled },
+      { new: true }
+    ).select('-password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user);
+  } catch (err: any) {
+    res.status(500).json({ message: err.message || 'Failed to update 2FA' });
+  }
+});
+
+// ── PATCH /api/auth/workspace-settings ─────────────────────
+router.patch('/workspace-settings', protect, async (req: AuthRequest, res: Response) => {
+  try {
+    const { workspaceSettings } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.userId,
+      { workspaceSettings },
+      { new: true }
+    ).select('-password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user);
+  } catch (err: any) {
+    res.status(500).json({ message: err.message || 'Failed to update workspace settings' });
+  }
+});
+
+// ── GET /api/auth/sessions ─────────────────────────────────
+router.get('/sessions', protect, async (req: AuthRequest, res: Response) => {
+  try {
+    const sessions = await RefreshToken.find({ user: req.userId }).sort({ createdAt: -1 });
+    res.json(sessions);
+  } catch (err: any) {
+    res.status(500).json({ message: err.message || 'Failed to fetch sessions' });
+  }
+});
+
+// ── DELETE /api/auth/sessions/:id ──────────────────────────
+router.delete('/sessions/:id', protect, async (req: AuthRequest, res: Response) => {
+  try {
+    await RefreshToken.deleteOne({ _id: req.params.id, user: req.userId });
+    res.json({ message: 'Session revoked' });
+  } catch (err: any) {
+    res.status(500).json({ message: err.message || 'Failed to revoke session' });
   }
 });
 

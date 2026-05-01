@@ -32,6 +32,13 @@ export interface IUser extends Document {
   verificationExpires?: Date | null;
   resetPasswordToken?: string | null;
   resetPasswordExpires?: Date | null;
+  twoFactorEnabled?: boolean;
+  workspaceSettings?: {
+    name: string;
+    defaultView: string;
+    defaultPriority: string;
+    autoArchive: boolean;
+  };
   notifications: INotification[];
   createdAt: Date;
   comparePassword(candidate: string): Promise<boolean>;
@@ -77,6 +84,21 @@ const UserSchema = new Schema<IUser>({
   verificationExpires:    { type: Date, default: null },
   resetPasswordToken:     { type: String, default: null },
   resetPasswordExpires:   { type: Date, default: null },
+  twoFactorEnabled:      { type: Boolean, default: false },
+  workspaceSettings: {
+    type: {
+      name:            { type: String, default: 'My Workspace' },
+      defaultView:     { type: String, default: 'Kanban Board' },
+      defaultPriority: { type: String, default: 'Medium' },
+      autoArchive:     { type: Boolean, default: true },
+    },
+    default: {
+      name: 'My Workspace',
+      defaultView: 'Kanban Board',
+      defaultPriority: 'Medium',
+      autoArchive: true,
+    },
+  },
   notifications:          { type: [NotificationSchema], default: [] },
 }, { timestamps: true });
 

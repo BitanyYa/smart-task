@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import {
   User, Settings, Bell, LayoutDashboard, Shield,
   Lock, ChevronRight, Loader2, Check, Pencil, Download
@@ -28,8 +28,8 @@ export const SettingsPage = () => {
   // Profile state
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
-  const [role, setRole] = useState((user as any)?.role || 'Product Designer');
-  const [bio, setBio] = useState((user as any)?.bio || '');
+  const [role, setRole] = useState(user?.role || 'Product Designer');
+  const [bio, setBio] = useState(user?.bio || '');
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
   const [profileError, setProfileError] = useState('');
@@ -37,10 +37,12 @@ export const SettingsPage = () => {
   // Security state
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
-  const [twoFactor, setTwoFactor] = useState(false);
+  const [twoFactor, setTwoFactor] = useState(user?.twoFactorEnabled || false);
   const [passLoading, setPassLoading] = useState(false);
   const [passSaved, setPassSaved] = useState(false);
   const [passError, setPassError] = useState('');
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
 
   // Export state
   const [exportLoading, setExportLoading] = useState(false);
@@ -50,21 +52,49 @@ export const SettingsPage = () => {
   const [avatarError, setAvatarError] = useState('');
 
   // Account state
-  const [language, setLanguage] = useState((user as any)?.language || 'English (United States)');
-  const [region, setRegion] = useState((user as any)?.region || 'North America');
-  const [timezone, setTimezone] = useState((user as any)?.timezone || '(GMT-05:00) Eastern Time');
+  const [language, setLanguage] = useState(user?.language || 'English (United States)');
+  const [region, setRegion] = useState(user?.region || 'North America');
+  const [timezone, setTimezone] = useState(user?.timezone || '(GMT-05:00) Eastern Time');
   const [prefsLoading, setPrefsLoading] = useState(false);
   const [prefsSaved, setPrefsSaved] = useState(false);
+  
+  // Workspace state
+  const [wsName, setWsName] = useState(user?.workspaceSettings?.name || 'My Workspace');
+  const [wsView, setWsView] = useState(user?.workspaceSettings?.defaultView || 'Kanban Board');
+  const [wsPriority, setWsPriority] = useState(user?.workspaceSettings?.defaultPriority || 'Medium');
+  const [wsAutoArchive, setWsAutoArchive] = useState(user?.workspaceSettings?.autoArchive ?? true);
+  const [wsLoading, setWsLoading] = useState(false);
+  const [wsSaved, setWsSaved] = useState(false);
 
   // Notifications state
   const [notifs, setNotifs] = useState({
-    email: (user as any)?.notificationPreferences?.email ?? true,
-    push: (user as any)?.notificationPreferences?.push ?? true,
-    taskUpdates: (user as any)?.notificationPreferences?.taskUpdates ?? true,
-    mentions: (user as any)?.notificationPreferences?.mentions ?? true,
-    weeklyDigest: (user as any)?.notificationPreferences?.weeklyDigest ?? false,
-    marketing: (user as any)?.notificationPreferences?.marketing ?? false,
+    email: user?.notificationPreferences?.email ?? true,
+    push: user?.notificationPreferences?.push ?? true,
+    taskUpdates: user?.notificationPreferences?.taskUpdates ?? true,
+    mentions: user?.notificationPreferences?.mentions ?? true,
+    weeklyDigest: user?.notificationPreferences?.weeklyDigest ?? false,
+    marketing: user?.notificationPreferences?.marketing ?? false,
   });
+
+  useEffect(() => {
+    if (activeTab === 'security' || activeTab === 'account') {
+      fetchSessions();
+    }
+  }, [activeTab]);
+
+  const fetchSessions = async () => {
+    setSessionsLoading(true);
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/auth/sessions`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSessions(response.data);
+    } catch (err) {
+      console.error('Failed to fetch sessions');
+    } finally {
+      setSessionsLoading(false);
+    }
+  };
 
   const handleProfileSave = async (e: FormEvent) => {
     e.preventDefault();
@@ -91,10 +121,15 @@ export const SettingsPage = () => {
     setPassError('');
     setPassLoading(true);
     try {
-      await axios.patch(`${import.meta.env.VITE_API_URL}/auth/password`,
+      const response = await axios.patch(`${import.meta.env.VITE_API_URL}/auth/password`,
         { currentPassword, newPassword },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      // Store the new tokens so the session stays alive
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('refreshToken', response.data.refreshToken);
+      }
       setPassSaved(true);
       setCurrentPassword('');
       setNewPassword('');
@@ -210,6 +245,57 @@ export const SettingsPage = () => {
     }
   };
 
+  const handleTwoFactorToggle = async () => {
+    const newValue = !twoFactor;
+    setTwoFactor(newValue);
+    try {
+      const response = await axios.patch(`${import.meta.env.VITE_API_URL}/auth/two-factor`,
+        { enabled: newValue },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      updateUser(response.data);
+    } catch (err: any) {
+      setTwoFactor(!newValue);
+      alert(err.response?.data?.message || 'Failed to update 2FA');
+    }
+  };
+
+  const handleWorkspaceSave = async (e: FormEvent) => {
+    e.preventDefault();
+    setWsLoading(true);
+    try {
+      const response = await axios.patch(`${import.meta.env.VITE_API_URL}/auth/workspace-settings`,
+        { 
+          workspaceSettings: {
+            name: wsName,
+            defaultView: wsView,
+            defaultPriority: wsPriority,
+            autoArchive: wsAutoArchive
+          }
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      updateUser(response.data);
+      setWsSaved(true);
+      setTimeout(() => setWsSaved(false), 2000);
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to update workspace settings');
+    } finally {
+      setWsLoading(false);
+    }
+  };
+
+  const handleRevokeSession = async (sessionId: string) => {
+    try {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/auth/sessions/${sessionId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSessions(sessions.filter(s => s._id !== sessionId));
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to revoke session');
+    }
+  };
+
   const Toggle = ({ checked, onChange }: { checked: boolean; onChange: () => void }) => (
     <button type="button" onClick={onChange}
       className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${checked ? 'bg-primary-500' : 'bg-gray-200 dark:bg-gray-700'}`}>
@@ -266,9 +352,9 @@ export const SettingsPage = () => {
                       <div className="w-20 h-20 rounded-full bg-cream-200 dark:bg-neutral-800 flex items-center justify-center">
                         <Loader2 size={24} className="text-primary-500 animate-spin" />
                       </div>
-                    ) : (user as any)?.avatar ? (
+                    ) : user?.avatar ? (
                       <img 
-                        src={(user as any).avatar} 
+                        src={user.avatar} 
                         alt={user?.name}
                         className="w-20 h-20 rounded-full object-cover shadow-md"
                       />
@@ -360,8 +446,8 @@ export const SettingsPage = () => {
               <button type="button" onClick={() => { 
                 setName(user?.name || ''); 
                 setEmail(user?.email || ''); 
-                setRole((user as any)?.role || 'Product Designer');
-                setBio((user as any)?.bio || '');
+                setRole(user?.role || 'Product Designer');
+                setBio(user?.bio || '');
               }}
                 className="px-5 py-2.5 text-sm font-semibold text-neutral-600 dark:text-neutral-400 border border-cream-300 dark:border-neutral-700 rounded-xl hover:bg-cream-200 dark:hover:bg-neutral-800 dark:bg-neutral-800 dark:hover:bg-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-800 transition-colors">
                 Cancel
@@ -457,20 +543,20 @@ export const SettingsPage = () => {
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-neutral-800 dark:text-cream-100">Two-Factor Auth</p>
-                      <p className="text-xs text-neutral-400">Enabled via Authenticator App</p>
+                      <p className="text-xs text-neutral-400">{twoFactor ? 'Enabled' : 'Disabled'}</p>
                     </div>
                   </div>
-                  <Toggle checked={twoFactor} onChange={() => setTwoFactor(p => !p)} />
+                  <Toggle checked={twoFactor} onChange={handleTwoFactorToggle} />
                 </div>
 
-                <div className="flex items-center justify-between p-3.5 bg-cream-200 dark:bg-neutral-800 rounded-xl cursor-pointer hover:bg-cream-200 dark:hover:bg-neutral-800 dark:bg-neutral-800 dark:hover:bg-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-700 transition-colors">
+                <div onClick={() => setActiveTab('security')} className="flex items-center justify-between p-3.5 bg-cream-200 dark:bg-neutral-800 rounded-xl cursor-pointer hover:bg-cream-300 dark:hover:bg-neutral-700 transition-colors">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
                       <Settings size={14} className="text-gray-500" />
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-neutral-800 dark:text-cream-100">Active Sessions</p>
-                      <p className="text-xs text-neutral-400">1 device currently logged in</p>
+                      <p className="text-xs text-neutral-400">{sessions.length} device{sessions.length === 1 ? '' : 's'} logged in</p>
                     </div>
                   </div>
                   <ChevronRight size={15} className="text-neutral-400" />
@@ -513,7 +599,7 @@ export const SettingsPage = () => {
 
         {/* WORKSPACE TAB */}
         {activeTab === 'workspace' && (
-          <div className="bg-cream-100 dark:bg-neutral-900 rounded-2xl border border-cream-300 dark:border-neutral-800 shadow-sm">
+          <form onSubmit={handleWorkspaceSave} className="bg-cream-100 dark:bg-neutral-900 rounded-2xl border border-cream-300 dark:border-neutral-800 shadow-sm">
             <div className="px-6 py-4 border-b border-cream-200 dark:border-neutral-800">
               <h2 className="text-lg font-bold text-neutral-800 dark:text-cream-100">Workspace</h2>
               <p className="text-xs text-neutral-400 mt-0.5">Configure your workspace settings</p>
@@ -521,11 +607,11 @@ export const SettingsPage = () => {
             <div className="p-6 flex flex-col gap-4">
               <div>
                 <label className={labelCls}>Workspace Name</label>
-                <input defaultValue="My Workspace" className={inputCls} />
+                <input value={wsName} onChange={e => setWsName(e.target.value)} className={inputCls} />
               </div>
               <div>
                 <label className={labelCls}>Default Task View</label>
-                <select className={inputCls}>
+                <select value={wsView} onChange={e => setWsView(e.target.value)} className={inputCls}>
                   <option>Kanban Board</option>
                   <option>List View</option>
                   <option>Calendar View</option>
@@ -533,7 +619,7 @@ export const SettingsPage = () => {
               </div>
               <div>
                 <label className={labelCls}>Default Priority</label>
-                <select className={inputCls}>
+                <select value={wsPriority} onChange={e => setWsPriority(e.target.value)} className={inputCls}>
                   <option>Medium</option>
                   <option>Low</option>
                   <option>High</option>
@@ -544,10 +630,17 @@ export const SettingsPage = () => {
                   <p className="text-sm font-semibold text-neutral-800 dark:text-cream-100">Auto-archive completed tasks</p>
                   <p className="text-xs text-neutral-400 mt-0.5">Move done tasks to archive after 7 days</p>
                 </div>
-                <Toggle checked={true} onChange={() => {}} />
+                <Toggle checked={wsAutoArchive} onChange={() => setWsAutoArchive(!wsAutoArchive)} />
+              </div>
+              <div className="flex justify-end pt-2">
+                <button type="submit" disabled={wsLoading}
+                  className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-primary-500 hover:bg-primary-600 disabled:opacity-60 rounded-xl transition-colors shadow-sm">
+                  {wsLoading ? <Loader2 size={14} className="animate-spin" /> : wsSaved ? <Check size={14} /> : null}
+                  {wsSaved ? 'Saved!' : 'Save Workspace Settings'}
+                </button>
               </div>
             </div>
-          </div>
+          </form>
         )}
 
         {/* SECURITY TAB */}
@@ -589,23 +682,49 @@ export const SettingsPage = () => {
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-neutral-800 dark:text-cream-100">Two-Factor Authentication</p>
-                      <p className="text-xs text-neutral-400">Add an extra layer of security</p>
+                      <p className="text-xs text-neutral-400">{twoFactor ? 'Protecting your account' : 'Not enabled'}</p>
                     </div>
                   </div>
-                  <Toggle checked={twoFactor} onChange={() => setTwoFactor(p => !p)} />
+                  <Toggle checked={twoFactor} onChange={handleTwoFactorToggle} />
                 </div>
-                <div className="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-cream-200 dark:hover:bg-neutral-800 dark:bg-neutral-800 dark:hover:bg-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-800 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-cream-200 dark:bg-neutral-800 flex items-center justify-center">
-                      <Settings size={15} className="text-gray-500" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-neutral-800 dark:text-cream-100">Active Sessions</p>
-                      <p className="text-xs text-neutral-400">1 device currently logged in</p>
-                    </div>
+              </div>
+            </div>
+
+            <div className="bg-cream-100 dark:bg-neutral-900 rounded-2xl border border-cream-300 dark:border-neutral-800 shadow-sm">
+              <div className="px-6 py-4 border-b border-cream-200 dark:border-neutral-800">
+                <h2 className="text-lg font-bold text-neutral-800 dark:text-cream-100">Active Sessions</h2>
+                <p className="text-xs text-neutral-400">Devices that are currently logged into your account</p>
+              </div>
+              <div className="divide-y divide-cream-200 dark:divide-neutral-800">
+                {sessionsLoading ? (
+                  <div className="p-10 flex justify-center">
+                    <Loader2 className="animate-spin text-primary-500" />
                   </div>
-                  <ChevronRight size={15} className="text-neutral-400" />
-                </div>
+                ) : sessions.length === 0 ? (
+                  <p className="p-6 text-sm text-neutral-500 text-center">No active sessions found.</p>
+                ) : sessions.map(session => (
+                  <div key={session._id} className="flex items-center justify-between px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-cream-200 dark:bg-neutral-800 flex items-center justify-center">
+                        <LayoutDashboard size={15} className="text-gray-500" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-neutral-800 dark:text-cream-100">
+                          {session.token.substring(0, 8)}... (Refresh Token)
+                        </p>
+                        <p className="text-xs text-neutral-400">
+                          Expires: {new Date(session.expiresAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => handleRevokeSession(session._id)}
+                      className="text-xs font-bold text-red-500 hover:underline"
+                    >
+                      Revoke
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

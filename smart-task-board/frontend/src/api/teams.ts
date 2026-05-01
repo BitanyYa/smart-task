@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { User } from '../types/task';
 
 const base = axios.create({ baseURL: import.meta.env.VITE_API_URL });
 const auth = (token: string) => ({ headers: { Authorization: `Bearer ${token}` } });
@@ -6,7 +7,7 @@ const auth = (token: string) => ({ headers: { Authorization: `Bearer ${token}` }
 export type TeamRole = 'admin' | 'member' | 'guest';
 
 export type TeamMember = {
-  user: { _id: string; name: string; email: string; avatar?: string };
+  user: User;
   role: TeamRole;
   joinedAt: string;
 };

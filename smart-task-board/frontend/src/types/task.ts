@@ -59,4 +59,25 @@ export type User = {
   name: string;
   email: string;
   avatar?: string;
+  isVerified?: boolean;
+  role?: string;
+  bio?: string;
+  language?: string;
+  region?: string;
+  timezone?: string;
+  twoFactorEnabled?: boolean;
+  workspaceSettings?: {
+    name: string;
+    defaultView: string;
+    defaultPriority: string;
+    autoArchive: boolean;
+  };
+  notificationPreferences?: {
+    email: boolean;
+    push: boolean;
+    taskUpdates: boolean;
+    mentions: boolean;
+    weeklyDigest: boolean;
+    marketing: boolean;
+  };
 };

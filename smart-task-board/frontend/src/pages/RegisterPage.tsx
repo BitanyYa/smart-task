@@ -18,9 +18,10 @@ export const RegisterPage = () => {
     setError('');
     setLoading(true);
     try {
-      await register(name, email, password);
+      await register(name, email.trim().toLowerCase(), password);
       navigate('/app');
     } catch (err: any) {
+      console.error('Registration error details:', err.response?.data || err);
       setError(err.response?.data?.message || 'Registration failed');
     } finally {
       setLoading(false);

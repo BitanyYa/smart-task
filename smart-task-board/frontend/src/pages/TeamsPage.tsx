@@ -3,7 +3,7 @@ import { Users, CheckSquare, Clock, AlertTriangle, Plus, MoreVertical, UserPlus,
 import { useAuth } from '../context/AuthContext';
 import * as teamsApi from '../api/teams';
 import * as projectsApi from '../api/projects';
-import type { TeamData, TeamRole } from '../api/teams';
+import type { TeamData, TeamRole, TeamMember } from '../api/teams';
 import type { Project } from '../api/projects';
 
 const roleColors: Record<TeamRole, string> = {
@@ -35,7 +35,7 @@ export const TeamsPage = () => {
   const [inviteError, setInviteError] = useState('');
   const [inviteSuccess, setInviteSuccess] = useState('');
   const [openMenu, setOpenMenu] = useState<string | null>(null);
-  const [selectedMember, setSelectedMember] = useState<typeof data.team.members[0] | null>(null);
+  const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   const [editingTeamName, setEditingTeamName] = useState(false);
   const [teamName, setTeamName] = useState('');
   const [projects, setProjects] = useState<Project[]>([]);
@@ -272,9 +272,9 @@ export const TeamsPage = () => {
 
               {/* Avatar */}
               <div className="relative mb-3">
-                {(member.user as any).avatar ? (
+                {member.user.avatar ? (
                   <img 
-                    src={(member.user as any).avatar} 
+                    src={member.user.avatar} 
                     alt={member.user.name}
                     className="w-16 h-16 rounded-full object-cover shadow-md"
                   />
@@ -443,7 +443,6 @@ export const TeamsPage = () => {
         const stats = getStats(selectedMember.user._id);
         const color = getAvatarColor(selectedMember.user.name);
         const joinedDate = new Date(selectedMember.joinedAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-        const memberUser = selectedMember.user as any;
 
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/25 backdrop-blur-sm" onClick={() => setSelectedMember(null)}>
@@ -457,9 +456,9 @@ export const TeamsPage = () => {
                 <div className="flex items-center gap-4">
                   {/* Avatar */}
                   <div className="relative">
-                    {memberUser.avatar ? (
+                    {selectedMember.user.avatar ? (
                       <img 
-                        src={memberUser.avatar} 
+                        src={selectedMember.user.avatar} 
                         alt={selectedMember.user.name}
                         className="w-16 h-16 rounded-full object-cover shadow-md"
                       />
@@ -472,8 +471,8 @@ export const TeamsPage = () => {
                   <div>
                     <h2 className="text-xl font-bold text-neutral-800 dark:text-cream-100">{selectedMember.user.name}</h2>
                     <p className="text-sm text-neutral-500 dark:text-neutral-400">{selectedMember.user.email}</p>
-                    {memberUser.role && (
-                      <p className="text-xs text-primary-600 dark:text-primary-400 mt-0.5 font-medium">{memberUser.role}</p>
+                    {selectedMember.user.role && (
+                      <p className="text-xs text-primary-600 dark:text-primary-400 mt-0.5 font-medium">{selectedMember.user.role}</p>
                     )}
                   </div>
                 </div>
@@ -482,10 +481,10 @@ export const TeamsPage = () => {
               {/* Body */}
               <div className="p-6 space-y-5">
                 {/* Bio */}
-                {memberUser.bio && (
+                {selectedMember.user.bio && (
                   <div>
                     <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-2">About</p>
-                    <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">{memberUser.bio}</p>
+                    <p className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">{selectedMember.user.bio}</p>
                   </div>
                 )}
 
