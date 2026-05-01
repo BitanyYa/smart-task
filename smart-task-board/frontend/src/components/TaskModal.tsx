@@ -12,10 +12,10 @@ interface Props {
 }
 
 export const TaskModal = ({ task, onClose, onSave }: Props) => {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [priority, setPriority] = useState<Priority>('medium');
+  const [priority, setPriority] = useState<Priority>(() => (user?.workspaceSettings?.defaultPriority?.toLowerCase() as Priority) || 'medium');
   const [status, setStatus] = useState<Status>('todo');
   const [dueDate, setDueDate] = useState('');
   const [labels, setLabels] = useState<string[]>([]);
@@ -26,8 +26,8 @@ export const TaskModal = ({ task, onClose, onSave }: Props) => {
   const [projects, setProjects] = useState<Project[]>([]);
 
   useEffect(() => {
-    if (token) fetchProjects(token).then(setProjects).catch(() => {});
-  }, [token]);
+    fetchProjects().then(setProjects).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (task) {

@@ -15,6 +15,7 @@ import { TeamsPage } from '../pages/TeamsPage';
 import { ProjectsPage } from '../pages/ProjectsPage';
 import { TaskBoardPage } from '../pages/TaskBoardPage';
 import { NotificationsPage } from '../pages/NotificationsPage';
+import { TaskListPage } from '../pages/TaskListPage';
 import { useTasks } from '../hooks/useTasks';
 import { useAuth } from '../context/AuthContext';
 import { isPast, format } from 'date-fns';
@@ -30,7 +31,11 @@ export const Board = () => {
   } = useTasks();
 
   const [search, setSearch] = useState('');
-  const [activePage, setActivePage] = useState<Page>('board');
+  const [activePage, setActivePage] = useState<Page>(() => {
+    const dv = user?.workspaceSettings?.defaultView;
+    if (dv === 'List View' || dv === 'Kanban Board') return 'my-tasks';
+    return 'board';
+  });
   const [editingTask, setEditingTask] = useState<Task | null | undefined>(undefined);
   const [detailTask, setDetailTask] = useState<Task | null>(null);
   const [localTasks, setLocalTasks] = useState<Task[]>([]);
@@ -107,6 +112,17 @@ export const Board = () => {
   const renderPage = () => {
     switch (activePage) {
       case 'my-tasks':
+        if (user?.workspaceSettings?.defaultView === 'List View') {
+          return (
+            <TaskListPage
+              tasks={tasks}
+              onEdit={t => setEditingTask(t)}
+              onDelete={removeTask}
+              onOpenDetail={setDetailTask}
+              onAdd={() => setEditingTask(null)}
+            />
+          );
+        }
         return (
           <TaskBoardPage
             tasks={tasks}

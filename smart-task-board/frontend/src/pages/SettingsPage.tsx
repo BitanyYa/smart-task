@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import axios from 'axios';
+import { api } from '../api/auth';
 
 type Tab = 'profile' | 'account' | 'notifications' | 'workspace' | 'security';
 
@@ -85,9 +85,7 @@ export const SettingsPage = () => {
   const fetchSessions = async () => {
     setSessionsLoading(true);
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/auth/sessions`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.get('/auth/sessions');
       setSessions(response.data);
     } catch (err) {
       console.error('Failed to fetch sessions');
@@ -101,10 +99,7 @@ export const SettingsPage = () => {
     setProfileError('');
     setProfileLoading(true);
     try {
-      const response = await axios.patch(`${import.meta.env.VITE_API_URL}/auth/profile`,
-        { name, email, role, bio },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await api.patch('/auth/profile', { name, email, role, bio });
       // Update context with new user data
       updateUser(response.data);
       setProfileSaved(true);
@@ -121,10 +116,7 @@ export const SettingsPage = () => {
     setPassError('');
     setPassLoading(true);
     try {
-      const response = await axios.patch(`${import.meta.env.VITE_API_URL}/auth/password`,
-        { currentPassword, newPassword },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await api.patch('/auth/password', { currentPassword, newPassword });
       // Store the new tokens so the session stays alive
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
@@ -144,9 +136,7 @@ export const SettingsPage = () => {
   const handleExportData = async () => {
     setExportLoading(true);
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/auth/export-data`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.get('/auth/export-data');
       
       // Create downloadable JSON file
       const dataStr = JSON.stringify(response.data, null, 2);
@@ -191,10 +181,7 @@ export const SettingsPage = () => {
       reader.onload = async () => {
         const base64 = reader.result as string;
         
-        const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/avatar`,
-          { avatar: base64 },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        const response = await api.post('/auth/avatar', { avatar: base64 });
 
         // Update context with new user data
         updateUser(response.data);
@@ -214,10 +201,7 @@ export const SettingsPage = () => {
   const handlePreferencesSave = async () => {
     setPrefsLoading(true);
     try {
-      const response = await axios.patch(`${import.meta.env.VITE_API_URL}/auth/preferences`,
-        { language, region, timezone },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await api.patch('/auth/preferences', { language, region, timezone });
       updateUser(response.data);
       setPrefsSaved(true);
       setTimeout(() => setPrefsSaved(false), 2000);
@@ -233,10 +217,7 @@ export const SettingsPage = () => {
     setNotifs(newNotifs);
     
     try {
-      const response = await axios.patch(`${import.meta.env.VITE_API_URL}/auth/notification-preferences`,
-        { notificationPreferences: newNotifs },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await api.patch('/auth/notification-preferences', { notificationPreferences: newNotifs });
       updateUser(response.data);
     } catch (err: any) {
       // Revert on error
@@ -249,10 +230,7 @@ export const SettingsPage = () => {
     const newValue = !twoFactor;
     setTwoFactor(newValue);
     try {
-      const response = await axios.patch(`${import.meta.env.VITE_API_URL}/auth/two-factor`,
-        { enabled: newValue },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await api.patch('/auth/two-factor', { enabled: newValue });
       updateUser(response.data);
     } catch (err: any) {
       setTwoFactor(!newValue);
@@ -264,17 +242,14 @@ export const SettingsPage = () => {
     e.preventDefault();
     setWsLoading(true);
     try {
-      const response = await axios.patch(`${import.meta.env.VITE_API_URL}/auth/workspace-settings`,
-        { 
-          workspaceSettings: {
-            name: wsName,
-            defaultView: wsView,
-            defaultPriority: wsPriority,
-            autoArchive: wsAutoArchive
-          }
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await api.patch('/auth/workspace-settings', { 
+        workspaceSettings: {
+          name: wsName,
+          defaultView: wsView,
+          defaultPriority: wsPriority,
+          autoArchive: wsAutoArchive
+        }
+      });
       updateUser(response.data);
       setWsSaved(true);
       setTimeout(() => setWsSaved(false), 2000);
@@ -287,9 +262,7 @@ export const SettingsPage = () => {
 
   const handleRevokeSession = async (sessionId: string) => {
     try {
-      await axios.delete(`${import.meta.env.VITE_API_URL}/auth/sessions/${sessionId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.delete(`/auth/sessions/${sessionId}`);
       setSessions(sessions.filter(s => s._id !== sessionId));
     } catch (err: any) {
       alert(err.response?.data?.message || 'Failed to revoke session');

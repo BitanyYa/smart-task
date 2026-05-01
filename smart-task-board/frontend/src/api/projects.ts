@@ -1,7 +1,4 @@
-import axios from 'axios';
-
-const base = axios.create({ baseURL: import.meta.env.VITE_API_URL });
-const auth = (token: string) => ({ headers: { Authorization: `Bearer ${token}` } });
+import { api } from './auth';
 
 export type ProjectStatus = 'active' | 'on-hold' | 'completed';
 
@@ -21,10 +18,10 @@ export type Project = {
   updatedAt: string;
 };
 
-export const fetchProjects  = (token: string) => base.get<Project[]>('/projects', auth(token)).then(r => r.data);
-export const createProject  = (token: string, data: { name: string; description?: string; status?: ProjectStatus; dueDate?: string }) =>
-  base.post<Project>('/projects', data, auth(token)).then(r => r.data);
-export const updateProject  = (token: string, id: string, data: Partial<Project>) =>
-  base.patch<Project>(`/projects/${id}`, data, auth(token)).then(r => r.data);
-export const deleteProject  = (token: string, id: string) => base.delete(`/projects/${id}`, auth(token));
-export const togglePin      = (token: string, id: string) => base.patch<Project>(`/projects/${id}/pin`, {}, auth(token)).then(r => r.data);
+export const fetchProjects  = () => api.get<Project[]>('/projects').then(r => r.data);
+export const createProject  = (data: { name: string; description?: string; status?: ProjectStatus; dueDate?: string }) =>
+  api.post<Project>('/projects', data).then(r => r.data);
+export const updateProject  = (id: string, data: Partial<Project>) =>
+  api.patch<Project>(`/projects/${id}`, data).then(r => r.data);
+export const deleteProject  = (id: string) => api.delete(`/projects/${id}`);
+export const togglePin      = (id: string) => api.patch<Project>(`/projects/${id}/pin`, {}).then(r => r.data);

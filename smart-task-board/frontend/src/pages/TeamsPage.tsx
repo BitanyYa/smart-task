@@ -47,8 +47,7 @@ export const TeamsPage = () => {
     data?.team.members.find(m => m.user._id === user?._id)?.role === 'admin';
 
   useEffect(() => {
-    if (!token) return;
-    teamsApi.getMyTeam(token)
+    teamsApi.getMyTeam()
       .then(d => {
         setData(d);
         setTeamName(d.team.name);
@@ -56,10 +55,10 @@ export const TeamsPage = () => {
       .finally(() => setLoading(false));
     
     // Fetch projects for invite dropdown
-    projectsApi.fetchProjects(token)
+    projectsApi.fetchProjects()
       .then(setProjects)
       .catch(() => {});
-  }, [token]);
+  }, []);
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,12 +66,12 @@ export const TeamsPage = () => {
     setInviteSuccess('');
     setInviteLoading(true);
     try {
-      const result = await teamsApi.inviteMember(token!, inviteEmail, inviteRole, selectedProjectId || undefined);
+      const result = await teamsApi.inviteMember(inviteEmail, inviteRole, selectedProjectId || undefined);
       setInviteSuccess(result.message);
       setInviteEmail('');
       setSelectedProjectId('');
       // Refresh
-      const updated = await teamsApi.getMyTeam(token!);
+      const updated = await teamsApi.getMyTeam();
       setData(updated);
     } catch (err: any) {
       setInviteError(err.response?.data?.message || 'Failed to invite');
@@ -83,15 +82,15 @@ export const TeamsPage = () => {
 
   const handleRemove = async (userId: string) => {
     if (!confirm('Remove this member?')) return;
-    await teamsApi.removeMember(token!, userId);
-    const updated = await teamsApi.getMyTeam(token!);
+    await teamsApi.removeMember(userId);
+    const updated = await teamsApi.getMyTeam();
     setData(updated);
     setOpenMenu(null);
   };
 
   const handleRoleChange = async (userId: string, role: TeamRole) => {
-    await teamsApi.changeRole(token!, userId, role);
-    const updated = await teamsApi.getMyTeam(token!);
+    await teamsApi.changeRole(userId, role);
+    const updated = await teamsApi.getMyTeam();
     setData(updated);
     setOpenMenu(null);
   };
@@ -102,8 +101,8 @@ export const TeamsPage = () => {
       return;
     }
     try {
-      await teamsApi.renameTeam(token!, teamName.trim());
-      const updated = await teamsApi.getMyTeam(token!);
+      await teamsApi.renameTeam(teamName.trim());
+      const updated = await teamsApi.getMyTeam();
       setData(updated);
       setEditingTeamName(false);
     } catch {
@@ -115,11 +114,11 @@ export const TeamsPage = () => {
   const handleAssignToProject = async (projectId: string) => {
     if (!assigningMemberId) return;
     try {
-      await teamsApi.addMemberToProject(token!, assigningMemberId, projectId);
+      await teamsApi.addMemberToProject(assigningMemberId, projectId);
       setShowProjectAssign(false);
       setAssigningMemberId(null);
       // Refresh projects to show updated member count
-      const updatedProjects = await projectsApi.fetchProjects(token!);
+      const updatedProjects = await projectsApi.fetchProjects();
       setProjects(updatedProjects);
     } catch (err: any) {
       alert(err.response?.data?.message || 'Failed to assign member to project');

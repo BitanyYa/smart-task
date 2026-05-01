@@ -17,32 +17,28 @@ export const NotificationsPage = ({ onNavigate }: Props) => {
   const [loading, setLoading] = useState(true);
 
   const fetchNotifs = useCallback(async () => {
-    if (!token) return;
     setLoading(true);
     try {
-      const data = await getNotifications(token);
+      const data = await getNotifications();
       setAppNotifs(data);
     } catch { /* silent */ } finally { setLoading(false); }
-  }, [token]);
+  }, []);
 
   useEffect(() => { fetchNotifs(); }, [fetchNotifs]);
 
   const handleMarkAllRead = async () => {
-    if (!token) return;
-    await markAllRead(token);
+    await markAllRead();
     setAppNotifs(prev => prev.map(n => ({ ...n, read: true })));
   };
 
   const handleMarkOneRead = async (id: string) => {
-    if (!token) return;
-    await markAsRead(token, id);
+    await markAsRead(id);
     setAppNotifs(prev => prev.map(n => n._id === id ? { ...n, read: true } : n));
   };
 
   const handleDeleteNotif = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!token) return;
-    await deleteNotification(token, id);
+    await deleteNotification(id);
     setAppNotifs(prev => prev.filter(n => n._id !== id));
   };
 

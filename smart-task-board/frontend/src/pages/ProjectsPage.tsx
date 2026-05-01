@@ -34,11 +34,10 @@ export const ProjectsPage = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!token) return;
-    projectsApi.fetchProjects(token)
+    projectsApi.fetchProjects()
       .then(setProjects)
       .finally(() => setLoading(false));
-  }, [token]);
+  }, []);
 
   const openCreate = () => {
     setEditProject(null);
@@ -60,13 +59,13 @@ export const ProjectsPage = () => {
     setSaving(true);
     try {
       if (editProject) {
-        const updated = await projectsApi.updateProject(token!, editProject._id, {
+        const updated = await projectsApi.updateProject(editProject._id, {
           name: newName.trim(), description: newDesc.trim(),
           status: newStatus, dueDate: newDue || undefined,
         });
         setProjects(prev => prev.map(p => p._id === updated._id ? updated : p));
       } else {
-        const created = await projectsApi.createProject(token!, {
+        const created = await projectsApi.createProject({
           name: newName.trim(), description: newDesc.trim(),
           status: newStatus, dueDate: newDue || undefined,
         });
@@ -83,7 +82,7 @@ export const ProjectsPage = () => {
     setProjects(prev => prev.map(p => p._id === id ? { ...p, pinned: !p.pinned } : p));
     setOpenMenu(null);
     // Sync to backend in background
-    projectsApi.togglePin(token!, id).catch(() => {
+    projectsApi.togglePin(id).catch(() => {
       // Revert on failure
       setProjects(prev => prev.map(p => p._id === id ? { ...p, pinned: !p.pinned } : p));
     });
@@ -92,7 +91,7 @@ export const ProjectsPage = () => {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this project?')) return;
     setProjects(prev => prev.filter(p => p._id !== id)); // optimistic
-    await projectsApi.deleteProject(token!, id);
+    await projectsApi.deleteProject(id);
     setOpenMenu(null);
   };
 

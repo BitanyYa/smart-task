@@ -24,7 +24,7 @@ const bottomItems: { id: Page; label: string; icon: React.ElementType }[] = [
 ];
 
 export const Sidebar = ({ activePage, onNavigate, trashedCount, onNewTask }: Props) => {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const navigate = useNavigate();
   const handleLogout = () => { logout(); navigate('/'); };
 
@@ -40,8 +40,10 @@ export const Sidebar = ({ activePage, onNavigate, trashedCount, onNewTask }: Pro
             </svg>
           </div>
           <div>
-            <p className="text-sm font-bold text-neutral-800 dark:text-cream-100 tracking-tight leading-none">Smart Task</p>
-            <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">Shared Studio</p>
+            <p className="text-sm font-bold text-neutral-800 dark:text-cream-100 tracking-tight leading-none">
+              {user?.workspaceSettings?.name || 'Smart Task'}
+            </p>
+            <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">Workspace</p>
           </div>
         </div>
 

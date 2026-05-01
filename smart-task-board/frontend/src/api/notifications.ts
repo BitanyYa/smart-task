@@ -1,7 +1,4 @@
-import axios from 'axios';
-
-const base = axios.create({ baseURL: import.meta.env.VITE_API_URL });
-const auth = (token: string) => ({ headers: { Authorization: `Bearer ${token}` } });
+import { api } from './auth';
 
 export type AppNotification = {
   _id: string;
@@ -11,14 +8,14 @@ export type AppNotification = {
   createdAt: string;
 };
 
-export const getNotifications = (token: string) =>
-  base.get<AppNotification[]>('/notifications', auth(token)).then(r => r.data);
+export const getNotifications = () =>
+  api.get<AppNotification[]>('/notifications').then(r => r.data);
 
-export const markAllRead = (token: string) =>
-  base.patch('/notifications/read-all', {}, auth(token)).then(r => r.data);
+export const markAllRead = () =>
+  api.patch('/notifications/read-all', {}).then(r => r.data);
 
-export const markAsRead = (token: string, id: string) =>
-  base.patch(`/notifications/${id}/read`, {}, auth(token)).then(r => r.data);
+export const markAsRead = (id: string) =>
+  api.patch(`/notifications/${id}/read`, {}).then(r => r.data);
 
-export const deleteNotification = (token: string, id: string) =>
-  base.delete(`/notifications/${id}`, auth(token)).then(r => r.data);
+export const deleteNotification = (id: string) =>
+  api.delete(`/notifications/${id}`).then(r => r.data);

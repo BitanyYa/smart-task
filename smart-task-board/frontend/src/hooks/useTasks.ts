@@ -15,8 +15,8 @@ export const useTasks = () => {
     try {
       setLoading(true);
       const [active, trash] = await Promise.all([
-        api.fetchTasks(token),
-        api.fetchTrashed(token),
+        api.fetchTasks(),
+        api.fetchTrashed(),
       ]);
       setTasks(active);
       setTrashed(trash);
@@ -30,48 +30,48 @@ export const useTasks = () => {
   useEffect(() => { load(); }, [load]);
 
   const addTask = async (dto: CreateTaskDto) => {
-    const task = await api.createTask(token!, dto);
+    const task = await api.createTask(dto);
     setTasks(prev => [task, ...prev]);
   };
 
   const editTask = async (id: string, dto: UpdateTaskDto) => {
-    const updated = await api.updateTask(token!, id, dto);
+    const updated = await api.updateTask(id, dto);
     setTasks(prev => prev.map(t => t.id === id ? updated : t));
   };
 
   const removeTask = async (id: string) => {
-    const deleted = await api.softDeleteTask(token!, id);
+    const deleted = await api.softDeleteTask(id);
     setTasks(prev => prev.filter(t => t.id !== id));
     setTrashed(prev => [deleted, ...prev]);
   };
 
   const restoreTask = async (id: string) => {
-    const restored = await api.restoreTask(token!, id);
+    const restored = await api.restoreTask(id);
     setTrashed(prev => prev.filter(t => t.id !== id));
     setTasks(prev => [restored, ...prev]);
   };
 
   const permanentDelete = async (id: string) => {
-    await api.hardDeleteTask(token!, id);
+    await api.hardDeleteTask(id);
     setTrashed(prev => prev.filter(t => t.id !== id));
   };
 
   const toggleTimer = async (task: Task) => {
     const updated = task.isTimerRunning
-      ? await api.stopTimer(token!, task.id)
-      : await api.startTimer(token!, task.id);
+      ? await api.stopTimer(task.id)
+      : await api.startTimer(task.id);
     setTasks(prev => prev.map(t => t.id === task.id ? updated : t));
   };
 
   const addComment = async (taskId: string, text: string) => {
-    const comment = await api.addComment(token!, taskId, text);
+    const comment = await api.addComment(taskId, text);
     setTasks(prev => prev.map(t =>
       t.id === taskId ? { ...t, comments: [...t.comments, comment] } : t
     ));
   };
 
   const deleteComment = async (taskId: string, commentId: string) => {
-    await api.deleteComment(token!, taskId, commentId);
+    await api.deleteComment(taskId, commentId);
     setTasks(prev => prev.map(t =>
       t.id === taskId
         ? { ...t, comments: t.comments.filter(c => c._id !== commentId) }

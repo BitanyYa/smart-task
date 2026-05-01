@@ -1,8 +1,5 @@
-import axios from 'axios';
+import { api } from './auth';
 import type { User } from '../types/task';
-
-const base = axios.create({ baseURL: import.meta.env.VITE_API_URL });
-const auth = (token: string) => ({ headers: { Authorization: `Bearer ${token}` } });
 
 export type TeamRole = 'admin' | 'member' | 'guest';
 
@@ -28,14 +25,14 @@ export type TeamData = {
   avgCompletionTime: number;
 };
 
-export const getMyTeam    = (token: string) => base.get<TeamData>('/teams/my', auth(token)).then(r => r.data);
-export const inviteMember = (token: string, email: string, role: TeamRole, projectId?: string) => 
-  base.post('/teams/my/invite', { email, role, projectId }, auth(token)).then(r => r.data);
-export const removeMember = (token: string, userId: string) => base.delete(`/teams/my/members/${userId}`, auth(token)).then(r => r.data);
-export const changeRole   = (token: string, userId: string, role: TeamRole) => base.patch(`/teams/my/members/${userId}/role`, { role }, auth(token)).then(r => r.data);
-export const renameTeam   = (token: string, name: string) => base.patch('/teams/my', { name }, auth(token)).then(r => r.data);
-export const cancelInvite = (token: string, inviteToken: string) => base.delete(`/teams/my/invites/${inviteToken}`, auth(token)).then(r => r.data);
-export const addMemberToProject = (token: string, userId: string, projectId: string) => 
-  base.post(`/teams/my/members/${userId}/projects/${projectId}`, {}, auth(token)).then(r => r.data);
-export const removeMemberFromProject = (token: string, userId: string, projectId: string) => 
-  base.delete(`/teams/my/members/${userId}/projects/${projectId}`, auth(token)).then(r => r.data);
+export const getMyTeam    = () => api.get<TeamData>('/teams/my').then(r => r.data);
+export const inviteMember = (email: string, role: TeamRole, projectId?: string) => 
+  api.post('/teams/my/invite', { email, role, projectId }).then(r => r.data);
+export const removeMember = (userId: string) => api.delete(`/teams/my/members/${userId}`).then(r => r.data);
+export const changeRole   = (userId: string, role: TeamRole) => api.patch(`/teams/my/members/${userId}/role`, { role }).then(r => r.data);
+export const renameTeam   = (name: string) => api.patch('/teams/my', { name }).then(r => r.data);
+export const cancelInvite = (inviteToken: string) => api.delete(`/teams/my/invites/${inviteToken}`).then(r => r.data);
+export const addMemberToProject = (userId: string, projectId: string) => 
+  api.post(`/teams/my/members/${userId}/projects/${projectId}`, {}).then(r => r.data);
+export const removeMemberFromProject = (userId: string, projectId: string) => 
+  api.delete(`/teams/my/members/${userId}/projects/${projectId}`).then(r => r.data);

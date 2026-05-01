@@ -23,12 +23,11 @@ export const Navbar = ({ search, onSearch, tasks, onNavigate }: Props) => {
   const [unreadCount, setUnreadCount] = useState(0);
 
   const fetchUnread = useCallback(async () => {
-    if (!token) return;
     try {
-      const notifs = await getNotifications(token);
+      const notifs = await getNotifications();
       setUnreadCount(notifs.filter(n => !n.read).length);
     } catch { /* silent */ }
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     fetchUnread();
