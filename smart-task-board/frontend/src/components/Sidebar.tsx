@@ -1,4 +1,4 @@
-import { LayoutDashboard, ListTodo, BarChart2, Archive, Trash2, HelpCircle, LogOut, ChevronRight, Users, FolderKanban } from 'lucide-react';
+import { LayoutDashboard, ListTodo, BarChart2, Archive, Trash2, HelpCircle, LogOut, ChevronRight, Users, FolderKanban, Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';import type { Page } from '../types/navigation';
 
@@ -15,6 +15,7 @@ const navItems: { id: Page; label: string; icon: React.ElementType }[] = [
   { id: 'projects', label: 'Projects', icon: FolderKanban },
   { id: 'analytics',label: 'Analytics',icon: BarChart2 },
   { id: 'teams',    label: 'Teams',    icon: Users },
+  { id: 'notifications', label: 'Notifications', icon: Bell },
 ];
 
 const bottomItems: { id: Page; label: string; icon: React.ElementType }[] = [

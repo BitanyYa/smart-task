@@ -16,3 +16,9 @@ export const getNotifications = (token: string) =>
 
 export const markAllRead = (token: string) =>
   base.patch('/notifications/read-all', {}, auth(token)).then(r => r.data);
+
+export const markAsRead = (token: string, id: string) =>
+  base.patch(`/notifications/${id}/read`, {}, auth(token)).then(r => r.data);
+
+export const deleteNotification = (token: string, id: string) =>
+  base.delete(`/notifications/${id}`, auth(token)).then(r => r.data);

@@ -28,9 +28,9 @@ const createRefreshToken = async (userId: string) => {
 router.post('/register', async (req: Request, res: Response) => {
   try {
     const schema = z.object({
-      name:     z.string().min(2),
-      email:    z.string().email(),
-      password: z.string().min(6),
+      name:     z.string().min(2, "Name must be at least 2 characters"),
+      email:    z.string().email("Please enter a valid email address"),
+      password: z.string().min(6, "Password must be at least 6 characters"),
     });
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: parsed.error.issues[0].message });
@@ -91,22 +91,28 @@ router.post('/register', async (req: Request, res: Response) => {
 router.post('/login', async (req: Request, res: Response) => {
   try {
     const schema = z.object({
-      email:    z.string().email(),
-      password: z.string().min(1),
+      email:    z.string().email("Please enter a valid email address"),
+      password: z.string().min(1, "Password is required"),
     });
     const parsed = schema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ message: parsed.error.issues[0].message });
+    if (!parsed.success) {
+      console.log(`[Login] Validation failed for:`, req.body.email, "Error:", parsed.error.issues[0].message);
+      return res.status(400).json({ message: parsed.error.issues[0].message });
+    }
 
     const { email, password } = parsed.data;
     const normalizedEmail = email.toLowerCase().trim();
+    console.log(`[Login] Attempting: ${normalizedEmail}`);
     
     const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
+      console.log(`[Login] User not found: ${normalizedEmail}`);
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
+      console.log(`[Login] Password mismatch for: ${normalizedEmail}`);
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 

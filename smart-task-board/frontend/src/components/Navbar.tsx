@@ -62,7 +62,7 @@ export const Navbar = ({ search, onSearch, tasks, onNavigate }: Props) => {
               {totalBadge > 99 ? '99+' : totalBadge}
             </span>
           )}
-          {showNotifications && <NotificationsPanel tasks={tasks} onClose={() => { setShowNotifications(false); fetchUnread(); }} />}
+          {showNotifications && <NotificationsPanel tasks={tasks} onClose={() => { setShowNotifications(false); fetchUnread(); }} onNavigate={onNavigate} />}
         </div>
 
         <button onClick={() => onNavigate('settings')} aria-label="Settings" className={iconBtn}>

@@ -14,6 +14,7 @@ import { SettingsPage } from '../pages/SettingsPage';
 import { TeamsPage } from '../pages/TeamsPage';
 import { ProjectsPage } from '../pages/ProjectsPage';
 import { TaskBoardPage } from '../pages/TaskBoardPage';
+import { NotificationsPage } from '../pages/NotificationsPage';
 import { useTasks } from '../hooks/useTasks';
 import { useAuth } from '../context/AuthContext';
 import { isPast, format } from 'date-fns';
@@ -131,6 +132,8 @@ export const Board = () => {
         return <TeamsPage />;
       case 'projects':
         return <ProjectsPage />;
+      case 'notifications':
+        return <NotificationsPage onNavigate={setActivePage} />;
       default: {
         const todo       = tasks.filter(t => t.status === 'todo');
         const inProg     = tasks.filter(t => t.status === 'inprogress');

@@ -20,6 +20,7 @@ export const LoginPage = () => {
       await login(email.trim().toLowerCase(), password);
       navigate('/app');
     } catch (err: any) {
+      console.error('Login error details:', err.response?.data || err);
       setError(err.response?.data?.message || 'Invalid email or password');
     } finally {
       setLoading(false);
