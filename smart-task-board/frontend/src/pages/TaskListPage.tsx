@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { List, Calendar, Tag, MoreHorizontal, CheckCircle2, Clock, Trash2, Pencil } from 'lucide-react';
+import { Calendar, Trash2, Pencil } from 'lucide-react';
 import { format, isPast } from 'date-fns';
-import type { Task, Priority } from '../types/task';
+import type { Task } from '../types/task';
 
 interface Props {
   tasks: Task[];

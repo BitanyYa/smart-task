@@ -24,7 +24,7 @@ function getAvatarColor(name: string) {
 }
 
 export const TeamsPage = () => {
-  const { token, user } = useAuth();
+  const { user } = useAuth();
   const [data, setData] = useState<TeamData | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -346,8 +346,8 @@ export const TeamsPage = () => {
                   <span className="text-xs bg-cream-200 dark:bg-neutral-800 text-neutral-500 px-2 py-0.5 rounded-full">Pending</span>
                   <button
                     onClick={async () => {
-                      await teamsApi.cancelInvite(token!, inv.token);
-                      const updated = await teamsApi.getMyTeam(token!);
+                      await teamsApi.cancelInvite(inv.token);
+                      const updated = await teamsApi.getMyTeam();
                       setData(updated);
                     }}
                     className="text-xs text-red-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 px-2 py-1 rounded-lg transition-colors"

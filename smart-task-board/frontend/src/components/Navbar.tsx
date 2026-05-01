@@ -17,7 +17,7 @@ interface Props {
 
 export const Navbar = ({ search, onSearch, tasks, onNavigate }: Props) => {
   const { theme, toggle } = useTheme();
-  const { user, token } = useAuth();
+  const { user } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);

@@ -21,7 +21,7 @@ const inputCls = "w-full bg-cream-100 dark:bg-neutral-800 border border-cream-30
 const labelCls = "text-[11px] font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-widest mb-1.5 block";
 
 export const SettingsPage = () => {
-  const { user, token, updateUser } = useAuth();
+  const { user, updateUser } = useAuth();
   const { theme, toggle } = useTheme();
   const [activeTab, setActiveTab] = useState<Tab>('profile');
 

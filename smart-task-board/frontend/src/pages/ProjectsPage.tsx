@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Plus, Search, SlidersHorizontal, ArrowUpDown, MoreHorizontal, Pin, Calendar, Loader2, X } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
 import * as projectsApi from '../api/projects';
 import type { Project, ProjectStatus } from '../api/projects';
 
@@ -19,7 +18,6 @@ const progressColor: Record<ProjectStatus, string> = {
 const avatarColors = ['bg-primary-500','bg-sage-500','bg-primary-400','bg-sage-400','bg-primary-600'];
 
 export const ProjectsPage = () => {
-  const { token } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');

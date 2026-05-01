@@ -12,7 +12,7 @@ interface Props {
 }
 
 export const TaskModal = ({ task, onClose, onSave }: Props) => {
-  const { token, user } = useAuth();
+  const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<Priority>(() => (user?.workspaceSettings?.defaultPriority?.toLowerCase() as Priority) || 'medium');

@@ -3,7 +3,6 @@ import { Bell, AlertCircle, Clock, CheckCircle2, X, Users, UserCheck, Trash2 } f
 import { isPast, formatDistanceToNow, format } from 'date-fns';
 import type { Task } from '../types/task';
 import type { Page } from '../types/navigation';
-import { useAuth } from '../context/AuthContext';
 import { getNotifications, markAllRead, markAsRead, deleteNotification, type AppNotification } from '../api/notifications';
 
 interface Props {
@@ -14,18 +13,16 @@ interface Props {
 
 export const NotificationsPanel = ({ tasks, onClose, onNavigate }: Props) => {
   const ref = useRef<HTMLDivElement>(null);
-  const { token } = useAuth();
   const [appNotifs, setAppNotifs] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(false);
 
   const fetchNotifs = useCallback(async () => {
-    if (!token) return;
     setLoading(true);
     try {
-      const data = await getNotifications(token);
+      const data = await getNotifications();
       setAppNotifs(data);
     } catch { /* silent */ } finally { setLoading(false); }
-  }, [token]);
+  }, []);
 
   useEffect(() => { fetchNotifs(); }, [fetchNotifs]);
 
@@ -38,21 +35,18 @@ export const NotificationsPanel = ({ tasks, onClose, onNavigate }: Props) => {
   }, [onClose]);
 
   const handleMarkAllRead = async () => {
-    if (!token) return;
-    await markAllRead(token);
+    await markAllRead();
     setAppNotifs(prev => prev.map(n => ({ ...n, read: true })));
   };
 
   const handleMarkOneRead = async (id: string) => {
-    if (!token) return;
-    await markAsRead(token, id);
+    await markAsRead(id);
     setAppNotifs(prev => prev.map(n => n._id === id ? { ...n, read: true } : n));
   };
 
   const handleDeleteNotif = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!token) return;
-    await deleteNotification(token, id);
+    await deleteNotification(id);
     setAppNotifs(prev => prev.filter(n => n._id !== id));
   };
 

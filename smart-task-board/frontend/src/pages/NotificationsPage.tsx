@@ -1,6 +1,5 @@
 import { Bell, AlertCircle, CheckCircle2, Trash2, ArrowLeft } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
-import { useAuth } from '../context/AuthContext';
 import { useTasks } from '../hooks/useTasks';
 import { getNotifications, markAllRead, markAsRead, deleteNotification, type AppNotification } from '../api/notifications';
 import { useState, useEffect, useCallback } from 'react';
@@ -11,7 +10,6 @@ interface Props {
 }
 
 export const NotificationsPage = ({ onNavigate }: Props) => {
-  const { token } = useAuth();
   const { tasks } = useTasks();
   const [appNotifs, setAppNotifs] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
