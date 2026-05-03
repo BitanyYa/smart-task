@@ -1,6 +1,8 @@
 import 'dotenv/config';
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import { connectDB } from './config/db';
 import authRoutes from './routes/auth';
@@ -12,6 +14,9 @@ import notificationRoutes from './routes/notifications';
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+app.set('trust proxy', 1);
+app.use(helmet());
+app.use(compression());
 app.use(cors({
   origin: process.env.APP_URL || 'http://localhost:5173',
   credentials: true,
