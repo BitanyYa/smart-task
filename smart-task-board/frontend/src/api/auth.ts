@@ -1,7 +1,15 @@
 import axios from 'axios';
 import type { User } from '../types/task';
 
-export const api = axios.create({ baseURL: import.meta.env.VITE_API_URL });
+const getBaseURL = () => {
+  const url = import.meta.env.VITE_API_URL || '';
+  if (url && !url.startsWith('http')) {
+    return `https://${url}`;
+  }
+  return url;
+};
+
+export const api = axios.create({ baseURL: getBaseURL() });
 
 // Request interceptor: add token to headers
 api.interceptors.request.use(config => {
