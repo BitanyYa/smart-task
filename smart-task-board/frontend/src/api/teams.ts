@@ -36,3 +36,9 @@ export const addMemberToProject = (userId: string, projectId: string) =>
   api.post(`/teams/my/members/${userId}/projects/${projectId}`, {}).then(r => r.data);
 export const removeMemberFromProject = (userId: string, projectId: string) => 
   api.delete(`/teams/my/members/${userId}/projects/${projectId}`).then(r => r.data);
+
+export const getInviteInfo = (token: string) =>
+  api.get<{ teamName: string; email: string; role: string }>(`/teams/accept-invite?token=${token}`).then(r => r.data);
+
+export const acceptInvite = (token: string) =>
+  api.post('/teams/accept-invite', { token }).then(r => r.data);

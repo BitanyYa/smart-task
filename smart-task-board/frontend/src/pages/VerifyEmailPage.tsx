@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import axios from 'axios';
+import { verifyEmail } from '../api/auth';
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 
 export const VerifyEmailPage = () => {
@@ -12,7 +12,7 @@ export const VerifyEmailPage = () => {
     const token = params.get('token');
     if (!token) { setStatus('error'); setMessage('Invalid verification link.'); return; }
 
-    axios.get(`http://localhost:4000/api/auth/verify-email?token=${token}`)
+    verifyEmail(token)
       .then(r => { setStatus('success'); setMessage(r.data.message); })
       .catch(e => { setStatus('error'); setMessage(e.response?.data?.message || 'Verification failed.'); });
   }, [params]);

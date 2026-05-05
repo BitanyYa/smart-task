@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import { getInviteInfo, acceptInvite } from '../api/teams';
 import { Loader2, Users, CheckCircle2, XCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -17,8 +17,8 @@ export const AcceptInvitePage = () => {
   useEffect(() => {
     if (!inviteToken) { setStatus('error'); setMessage('Invalid invite link.'); return; }
 
-    axios.get(`http://localhost:4000/api/teams/accept-invite?token=${inviteToken}`)
-      .then(r => { setInviteInfo(r.data); setStatus('info'); })
+    getInviteInfo(inviteToken)
+      .then(info => { setInviteInfo(info); setStatus('info'); })
       .catch(e => { setStatus('error'); setMessage(e.response?.data?.message || 'Invalid or expired invite.'); });
   }, [inviteToken]);
 
@@ -30,10 +30,7 @@ export const AcceptInvitePage = () => {
     }
     setStatus('accepting');
     try {
-      await axios.post('http://localhost:4000/api/teams/accept-invite',
-        { token: inviteToken },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await acceptInvite(inviteToken!);
       setStatus('success');
       setTimeout(() => navigate('/app'), 2500);
     } catch (e: any) {

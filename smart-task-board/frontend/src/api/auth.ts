@@ -56,3 +56,12 @@ export const refreshAccessToken = (refreshToken: string) =>
 
 export const logout = (refreshToken: string) =>
   api.post('/auth/logout', { refreshToken });
+
+export const forgotPassword = (email: string) =>
+  api.post('/auth/forgot-password', { email });
+
+export const resetPassword = (data: { token: string; password: string }) =>
+  api.post('/auth/reset-password', data);
+
+export const verifyEmail = (token: string) =>
+  api.get(`/auth/verify-email?token=${token}`);

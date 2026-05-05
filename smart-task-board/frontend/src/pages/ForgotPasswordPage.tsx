@@ -1,12 +1,13 @@
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import { forgotPassword } from '../api/auth';
 import { Loader2, ArrowLeft, CheckCircle2 } from 'lucide-react';
 
 export const ForgotPasswordPage = () => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [emailValue, setEmailValue] = useState(''); // store the email that was sent for display
   const [error, setError] = useState('');
 
   const handleSubmit = async (e: FormEvent) => {
@@ -14,7 +15,8 @@ export const ForgotPasswordPage = () => {
     setError('');
     setLoading(true);
     try {
-      await axios.post('http://localhost:4000/api/auth/forgot-password', { email });
+      await forgotPassword(email);
+      setEmailValue(email);
       setSent(true);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Something went wrong');
@@ -44,7 +46,7 @@ export const ForgotPasswordPage = () => {
               <CheckCircle2 size={44} className="text-sage-500 mx-auto mb-4" />
               <h2 className="text-xl font-bold text-neutral-800 mb-2">Check your inbox</h2>
               <p className="text-sm text-neutral-500 mb-6">
-                If <strong>{email}</strong> has an account, we've sent a password reset link.
+                If <strong>{emailValue}</strong> has an account, we've sent a password reset link.
               </p>
               <Link to="/login" className="text-sm font-semibold text-primary-500 hover:underline flex items-center justify-center gap-1">
                 <ArrowLeft size={14} /> Back to Sign In
