@@ -2,13 +2,22 @@ import nodemailer from 'nodemailer';
 
 export const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
-  port: 587,
-  secure: false, // use STARTTLS
+  port: 465,
+  secure: true, // use SSL
   auth: {
     user: process.env.GMAIL_USER,
     pass: process.env.GMAIL_PASS,
   },
   connectionTimeout: 10000,
+});
+
+// Verify connection on startup
+transporter.verify((error, success) => {
+  if (error) {
+    console.error('[Mailer] Connection error:', error.message);
+  } else {
+    console.log('[Mailer] SMTP Server is ready');
+  }
 });
 
 const baseHtml = (content: string) => `
