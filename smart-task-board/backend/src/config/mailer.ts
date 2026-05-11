@@ -3,22 +3,24 @@ import nodemailer from 'nodemailer';
 export const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 465,
-  secure: true, // use SSL
+  secure: true,
   auth: {
     user: process.env.GMAIL_USER,
     pass: process.env.GMAIL_PASS,
   },
-  connectionTimeout: 10000,
+  connectionTimeout: 5000, // Reduced timeout for faster startup
 });
 
-// Verify connection on startup
-transporter.verify((error, success) => {
-  if (error) {
-    console.error('[Mailer] Connection error:', error.message);
-  } else {
+// Run verification in the background to avoid blocking Railway startup
+(async () => {
+  try {
+    await transporter.verify();
     console.log('[Mailer] SMTP Server is ready');
+  } catch (error: any) {
+    console.warn('[Mailer] SMTP connection could not be established:', error.message);
+    console.warn('[Mailer] Registration emails might fail until SMTP is accessible.');
   }
-});
+})();
 
 const baseHtml = (content: string) => `
   <div style="font-family:'Plus Jakarta Sans',sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#f2ede8;border-radius:16px;">
