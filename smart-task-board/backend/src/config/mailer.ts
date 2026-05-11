@@ -1,26 +1,45 @@
-import nodemailer from 'nodemailer';
 
-export const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 465,
-  secure: true,
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_PASS,
-  },
-  connectionTimeout: 5000, // Reduced timeout for faster startup
-});
+// We are switching from Nodemailer (SMTP) to Resend (HTTP API) 
+// because Railway blocks outbound SMTP ports.
 
-// Run verification in the background to avoid blocking Railway startup
-(async () => {
-  try {
-    await transporter.verify();
-    console.log('[Mailer] SMTP Server is ready');
-  } catch (error: any) {
-    console.warn('[Mailer] SMTP connection could not be established:', error.message);
-    console.warn('[Mailer] Registration emails might fail until SMTP is accessible.');
+const RESEND_API_URL = 'https://api.resend.com/emails';
+
+const sendResendEmail = async (to: string, subject: string, html: string) => {
+  const apiKey = process.env.RESEND_API_KEY;
+  
+  if (!apiKey) {
+    console.error('[Mailer] RESEND_API_KEY is missing in environment variables');
+    return;
   }
-})();
+
+  try {
+    const response = await fetch(RESEND_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        from: 'SmartTask <onboarding@resend.dev>', // Default Resend testing address
+        to: [to],
+        subject: subject,
+        html: html,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error('[Mailer] Resend API Error:', data);
+      throw new Error(data.message || 'Failed to send email via Resend');
+    }
+
+    console.log(`[Mailer] Email sent successfully to ${to}. ID: ${data.id}`);
+  } catch (error: any) {
+    console.error('[Mailer] Failed to send email:', error.message);
+    throw error;
+  }
+};
 
 const baseHtml = (content: string) => `
   <div style="font-family:'Plus Jakarta Sans',sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#f2ede8;border-radius:16px;">
@@ -40,11 +59,10 @@ const btn = (url: string, label: string) =>
 
 export const sendVerificationEmail = async (to: string, name: string, token: string) => {
   const url = `${process.env.APP_URL}/verify-email?token=${token}`;
-  await transporter.sendMail({
-    from: `"SmartTask" <${process.env.GMAIL_USER}>`,
+  await sendResendEmail(
     to,
-    subject: 'Verify your SmartTask account',
-    html: baseHtml(`
+    'Verify your SmartTask account',
+    baseHtml(`
       <h2 style="color:#272422;font-size:22px;font-weight:700;margin-bottom:8px;">Hi ${name} 👋</h2>
       <p style="color:#5d5a58;font-size:15px;line-height:1.6;margin-bottom:24px;">
         Thanks for signing up! Please verify your email address to activate your account.
@@ -53,17 +71,16 @@ export const sendVerificationEmail = async (to: string, name: string, token: str
       <p style="color:#a09d99;font-size:13px;margin-top:16px;">
         This link expires in 24 hours. If you didn't create an account, you can safely ignore this email.
       </p>
-    `),
-  });
+    `)
+  );
 };
 
 export const sendPasswordResetEmail = async (to: string, name: string, token: string) => {
   const url = `${process.env.APP_URL}/reset-password?token=${token}`;
-  await transporter.sendMail({
-    from: `"SmartTask" <${process.env.GMAIL_USER}>`,
+  await sendResendEmail(
     to,
-    subject: 'Reset your SmartTask password',
-    html: baseHtml(`
+    'Reset your SmartTask password',
+    baseHtml(`
       <h2 style="color:#272422;font-size:22px;font-weight:700;margin-bottom:8px;">Password Reset</h2>
       <p style="color:#5d5a58;font-size:15px;line-height:1.6;margin-bottom:24px;">
         Hi ${name}, we received a request to reset your password. Click the button below to set a new one.
@@ -72,17 +89,16 @@ export const sendPasswordResetEmail = async (to: string, name: string, token: st
       <p style="color:#a09d99;font-size:13px;margin-top:16px;">
         This link expires in 1 hour. If you didn't request a reset, ignore this email.
       </p>
-    `),
-  });
+    `)
+  );
 };
 
 export const sendTeamInviteEmail = async (to: string, inviterName: string, teamName: string, token: string) => {
   const url = token ? `${process.env.APP_URL}/accept-invite?token=${token}` : `${process.env.APP_URL}/app`;
-  await transporter.sendMail({
-    from: `"SmartTask" <${process.env.GMAIL_USER}>`,
+  await sendResendEmail(
     to,
-    subject: `${inviterName} invited you to join ${teamName} on SmartTask`,
-    html: baseHtml(`
+    `${inviterName} invited you to join ${teamName} on SmartTask`,
+    baseHtml(`
       <h2 style="color:#272422;font-size:22px;font-weight:700;margin-bottom:8px;">You're invited! 🎉</h2>
       <p style="color:#5d5a58;font-size:15px;line-height:1.6;margin-bottom:8px;">
         <strong>${inviterName}</strong> has invited you to join <strong>${teamName}</strong> on SmartTask.
@@ -94,6 +110,6 @@ export const sendTeamInviteEmail = async (to: string, inviterName: string, teamN
       <p style="color:#a09d99;font-size:13px;margin-top:16px;">
         This invitation expires in 7 days. If you don't have a SmartTask account, you'll be prompted to create one.
       </p>
-    `),
-  });
+    `)
+  );
 };
